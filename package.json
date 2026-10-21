@@ -7,7 +7,7 @@
     "start": "node ./dist/src/server.js",
     "dev": "tsx watch ./src/server.ts",
     "build": "prisma generate && tsc",
-    "test": "jest",
+    "test": "NODE_OPTIONS='--experimental-vm-modules --disable-warning=ExperimentalWarning' jest",
     "postinstall": "prisma skills sync || exit 0",
     "contract:emit": "prisma contract emit"
   },
@@ -41,11 +41,13 @@
     "multer": "^2.4.0",
     "nodemailer": "^10.1.7",
     "openai": "^7.39.0",
-    "pdf-parser": "^1.0.5",
+    "pdf-parse": "^2.4.5",
     "winston": "^3.19.0",
     "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@swc/core": "^1.16.18",
+    "@swc/jest": "^0.2.39",
     "@types/bcrypt": "^6.0.0",
     "@types/express": "^5.0.6",
     "@types/jest": "^30.0.0",
@@ -56,7 +58,6 @@
     "jest": "^30.5.2",
     "prisma": "^7.10.1",
     "supertest": "^7.3.1",
-    "ts-jest": "^29.4.15",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2"
   }
