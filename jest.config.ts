@@ -13,6 +13,7 @@ const config: Config = {
   },
   moduleFileExtensions: ["ts", "js"],
   testMatch: ["**/__tests__/**/*.test.ts", "**/*.test.ts"],
+  setupFiles: ["<rootDir>/test/setupEnv.ts"],
 };
 
 export default config;
