@@ -1,0 +1,9 @@
+allowBuilds:
+  '@parcel/watcher': false
+  '@prisma/engines': true
+  bcrypt: false
+  esbuild: false
+  node-base64: false
+  prisma: true
+  unrs-resolver: false
+  workerd: false
