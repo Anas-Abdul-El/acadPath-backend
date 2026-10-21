@@ -1,6 +1,6 @@
 /// <reference types="jest" />
 import { z } from "zod";
-import { AppErr } from "../../src/libs/appErr";
+import AppErr from "../../src/libs/appErr";
 
 describe("AppErr", () => {
   it("stores the message and status code", () => {
