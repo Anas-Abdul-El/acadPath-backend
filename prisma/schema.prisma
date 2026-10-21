@@ -14,3 +14,394 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+// ─── Enums ───────────────────────────────────────────────
+
+enum UserRole {
+  STUDENT
+  ADMIN
+}
+
+enum YearOfStudy {
+  NEW_STUDENT
+  YEAR_1
+  YEAR_2
+  YEAR_3
+  YEAR_4
+  YEAR_5_PLUS
+}
+
+enum DegreeType {
+  BACHELOR
+  MASTER
+  DOCTORATE
+  ASSOCIATE
+  OTHER
+}
+
+enum Term {
+  FALL
+  SPRING
+  SUMMER
+}
+
+enum CourseCategory {
+  MAJOR_REQUIREMENT
+  MAJOR_ELECTIVE
+  MATH_SCIENCE
+  GENERAL_EDUCATION
+}
+
+enum CourseRelationType {
+  PREREQUISITE
+  COREQUISITE
+}
+
+enum CourseSource {
+  CATALOG_IMPORT
+  AI_EXTRACTED
+  ADMIN
+}
+
+enum LetterGrade {
+  A
+  A_MINUS
+  B_PLUS
+  B
+  B_MINUS
+  C_PLUS
+  C
+  C_MINUS
+  D_PLUS
+  D
+  F
+}
+
+enum AcademicRecordStatus {
+  COMPLETED
+  FAILED
+  IN_PROGRESS
+}
+
+enum PlannedCourseStatus {
+  PLANNED
+  COMPLETED
+  IN_PROGRESS
+  SKIPPED
+}
+
+enum SourceType {
+  HTML
+  PDF
+  IMAGE
+}
+
+enum ProcessingStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum StudentDocumentType {
+  TRANSCRIPT
+  DEGREE_AUDIT
+  PORTAL_SCREENSHOT
+  OTHER
+}
+
+enum ResourcePlatform {
+  YOUTUBE
+  UDEMY
+  COURSERA
+}
+
+enum ResourceDifficulty {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+// ─── Accounts ────────────────────────────────────────────
+
+model User {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         UserRole @default(STUDENT)
+
+  sessions       Session[]
+  studentProfile StudentProfile?
+  editedCourses  Course[]        @relation("CourseEditor")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Session {
+  id               String    @id @default(uuid())
+  userId           String
+  refreshTokenHash String    @unique
+  expiresAt        DateTime
+  revokedAt        DateTime?
+  lastUsedAt       DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+// ─── Universities and catalog ────────────────────────────
+
+model University {
+  id          String  @id @default(uuid())
+  name        String
+  shortName   String?
+  country     String
+  city        String
+  website     String?
+  catalogYear String?
+
+  majors   Major[]
+  students StudentProfile[]
+  sources  CourseMaterialSource[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([name, country])
+  @@index([country])
+}
+
+model Major {
+  id                   String     @id @default(uuid())
+  universityId         String
+  name                 String
+  degreeType           DegreeType @default(BACHELOR)
+  totalRequiredCredits Int?
+
+  university University @relation(fields: [universityId], references: [id], onDelete: Cascade)
+
+  students StudentProfile[]
+  courses  Course[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([universityId, name])
+  @@index([universityId])
+}
+
+model Course {
+  id           String         @id @default(uuid())
+  majorId      String
+  code         String
+  name         String
+  description  String?        @db.Text
+  credits      Int
+  category     CourseCategory
+  offeredTerms Term[]         @default([])
+  source       CourseSource
+  updatedById  String?
+
+  major Major @relation(fields: [majorId], references: [id], onDelete: Cascade)
+
+  updatedBy User? @relation("CourseEditor", fields: [updatedById], references: [id], onDelete: SetNull)
+
+  requisites  CoursePrerequisite[] @relation("Course")
+  requiredFor CoursePrerequisite[] @relation("RequiredCourse")
+
+  academicRecords AcademicRecord[]
+  plannedCourses  StudyPlanCourse[]
+  resources       LearningResource[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([majorId, code])
+  @@index([majorId, category])
+  @@index([updatedById])
+}
+
+model CoursePrerequisite {
+  courseId         String
+  requiredCourseId String
+  relationType     CourseRelationType @default(PREREQUISITE)
+
+  course Course @relation("Course", fields: [courseId], references: [id], onDelete: Cascade)
+
+  requiredCourse Course @relation("RequiredCourse", fields: [requiredCourseId], references: [id], onDelete: Cascade)
+
+  @@id([courseId, requiredCourseId, relationType])
+  @@index([requiredCourseId])
+}
+
+// ─── Catalog sources ─────────────────────────────────────
+
+model CourseMaterialSource {
+  id              String           @id @default(uuid())
+  universityId    String
+  title           String?
+  url             String           @db.Text
+  sourceType      SourceType
+  lastFetchedAt   DateTime?
+  lastProcessedAt DateTime?
+  errorMessage    String?          @db.Text
+
+  university University @relation(fields: [universityId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([universityId, url])
+  @@index([universityId])
+}
+
+// ─── Student data ────────────────────────────────────────
+
+model StudentProfile {
+  id                    String       @id @default(uuid())
+  userId                String       @unique
+  universityId          String?
+  majorId               String?
+  yearOfStudy           YearOfStudy?
+  onboardingCompletedAt DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  university University? @relation(fields: [universityId], references: [id], onDelete: SetNull)
+
+  major Major? @relation(fields: [majorId], references: [id], onDelete: SetNull)
+
+  academicRecords AcademicRecord[]
+  studyPlans      StudyPlan[]
+  documents       StudentDocument[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([universityId])
+  @@index([majorId])
+}
+
+model AcademicRecord {
+  id            String               @id @default(uuid())
+  studentId     String
+  courseId      String
+  status        AcademicRecordStatus
+  grade         LetterGrade?
+  expectedGrade LetterGrade?
+  term          Term
+  year          Int
+
+  student StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Restrict)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([studentId, status])
+  @@index([studentId, year, term])
+  @@index([courseId])
+}
+
+model StudentDocument {
+  id           String              @id @default(uuid())
+  studentId    String
+  type         StudentDocumentType @default(OTHER)
+  fileName     String
+  fileUrl      String?             @db.Text
+  mimeType     String
+  fileSize     Int
+  status       ProcessingStatus    @default(PENDING)
+  errorMessage String?             @db.Text
+  processedAt  DateTime?
+
+  student StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([studentId, status])
+  @@index([studentId, type])
+}
+
+// ─── Study plans ─────────────────────────────────────────
+
+model StudyPlan {
+  id          String          @id @default(uuid())
+  studentId   String
+  name        String          @default("Study plan")
+  assumptions String[]        @default([])
+  notes       String[]        @default([])
+
+  student StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  semesters StudyPlanSemester[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([studentId])
+}
+
+model StudyPlanSemester {
+  id          String  @id @default(uuid())
+  studyPlanId String
+  term        Term
+  year        Int
+  rationale   String? @db.Text
+
+  studyPlan StudyPlan @relation(fields: [studyPlanId], references: [id], onDelete: Cascade)
+
+  courses StudyPlanCourse[]
+
+  createdAt DateTime @default(now())
+
+  @@unique([studyPlanId, year, term])
+}
+
+model StudyPlanCourse {
+  id         String              @id @default(uuid())
+  semesterId String
+  courseId   String
+  status     PlannedCourseStatus @default(PLANNED)
+
+  semester StudyPlanSemester @relation(fields: [semesterId], references: [id], onDelete: Cascade)
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Restrict)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([semesterId, courseId])
+  @@index([courseId])
+}
+
+// ─── Learning resources ───────────────────────────────────
+
+model LearningResource {
+  id          String              @id @default(uuid())
+  title       String
+  url         String              @unique @db.Text
+  platform    ResourcePlatform
+  provider    String?
+  format      String?
+  description String?             @db.Text
+  duration    String?
+  difficulty  ResourceDifficulty?
+  topics      String[]            @default([])
+  verified    Boolean             @default(false)
+
+  courses Course[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([platform])
+}
