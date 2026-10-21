@@ -12,12 +12,16 @@ export interface ValidationIssue {
 //
 // It also accepts a ZodError: `throw new AppErr(result.error)` becomes a 400
 // "Validation failed" with one entry in `details` per invalid field.
-export class AppErr extends Error {
+export default class AppErr extends Error {
   readonly statusCode: number;
   readonly details?: ValidationIssue[];
 
   // `options.cause` keeps the original error (e.g. a Prisma or axios error) for logging.
-  constructor(error: string | ZodError, statusCode?: number, options?: ErrorOptions) {
+  constructor(
+    error: string | ZodError,
+    statusCode?: number,
+    options?: ErrorOptions,
+  ) {
     if (error instanceof ZodError) {
       // The ZodError itself becomes the cause, so the full report is still available in logs.
       super("Validation failed", { cause: error, ...options });
