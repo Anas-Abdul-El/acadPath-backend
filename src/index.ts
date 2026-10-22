@@ -4,8 +4,8 @@ import cookieParser from "cookie-parser";
 import type { Express } from "express";
 import limiter from "./config/limiter";
 import AppErr from "./libs/appErr.js";
-import { errorHandler } from "./middlewares/errorHandler.js";
-import authRouter from "./routes/auth.routes.js";
+import { errorHandler } from "./middlewares/index.js";
+import { authRouter } from "./routes/index.js";
 
 const app: Express = express();
 

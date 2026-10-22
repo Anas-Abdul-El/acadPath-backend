@@ -4,7 +4,7 @@ import jwt from "jsonwebtoken";
 import request from "supertest";
 import app from "../../src/index";
 import * as authRepository from "../../src/repositories/auth.repository";
-import type { AuthUserDto, SessionRecord } from "../../src/types/auth.types";
+import type { AuthUserDto, SessionRecord } from "../../src/types/auth";
 
 // Replace every repository function with a jest.fn(), so these tests run the real
 // routes, validation, controller and service without touching the database.
@@ -15,6 +15,7 @@ jest.mock("../../src/repositories/auth.repository", () => ({
   createSession: jest.fn(),
   findSessionById: jest.fn(),
   rotateSession: jest.fn(),
+  revokeSession: jest.fn(),
   revokeAllUserSessions: jest.fn(),
 }));
 const repo = jest.mocked(authRepository);
@@ -318,6 +319,90 @@ describe("POST /api/auth/refresh", () => {
 
     expect(res.status).toBe(401);
     expect(getRefreshCookie(res)).toBeUndefined();
+  });
+});
+
+describe("POST /api/auth/logout", () => {
+  const sessionId = "session-1";
+  const token = jwt.sign({ sub: user.id, sid: sessionId }, REFRESH_SECRET, { expiresIn: "7d" });
+  let storedHash: string;
+
+  beforeAll(async () => {
+    storedHash = await bcrypt.hash(signatureOf(token), 4);
+  });
+
+  function activeSession(overrides: Partial<SessionRecord> = {}): SessionRecord {
+    return {
+      id: sessionId,
+      userId: user.id,
+      userRole: user.role,
+      refreshTokenHash: storedHash,
+      expiresAt: new Date(Date.now() + 60_000),
+      revokedAt: null,
+      ...overrides,
+    };
+  }
+
+  const sendLogout = (cookie?: string) => {
+    const req = request(app).post("/api/auth/logout");
+    return cookie === undefined ? req : req.set("Cookie", `refreshToken=${cookie}`);
+  };
+
+  // The cookie is cleared by setting it again, empty and already expired, on the same path.
+  function expectCookieCleared(res: request.Response) {
+    const cookie = getRefreshCookie(res);
+    expect(cookie).toBeDefined();
+    expect(cookie!.token).toBe("");
+    expect(cookie!.attributes).toContain("path=/api/auth");
+    expect(cookie!.attributes).toContain("expires=thu, 01 jan 1970");
+  }
+
+  it("revokes the session and clears the refresh cookie", async () => {
+    repo.findSessionById.mockResolvedValue(activeSession());
+
+    const res = await sendLogout(token);
+
+    expect(res.status).toBe(204);
+    expect(repo.findSessionById).toHaveBeenCalledWith(sessionId);
+    expect(repo.revokeSession).toHaveBeenCalledWith(sessionId);
+    expect(repo.revokeAllUserSessions).not.toHaveBeenCalled();
+    expectCookieCleared(res);
+  });
+
+  it("succeeds without a cookie", async () => {
+    const res = await sendLogout();
+
+    expect(res.status).toBe(204);
+    expect(repo.findSessionById).not.toHaveBeenCalled();
+    expectCookieCleared(res);
+  });
+
+  it("succeeds for an invalid token without touching the database", async () => {
+    const res = await sendLogout("not-a-jwt");
+
+    expect(res.status).toBe(204);
+    expect(repo.findSessionById).not.toHaveBeenCalled();
+    expectCookieCleared(res);
+  });
+
+  it("does not revoke the session for a validly signed token that isn't the one stored", async () => {
+    const otherToken = jwt.sign({ sub: user.id, sid: sessionId, n: 1 }, REFRESH_SECRET);
+    repo.findSessionById.mockResolvedValue(activeSession());
+
+    const res = await sendLogout(otherToken);
+
+    expect(res.status).toBe(204);
+    expect(repo.revokeSession).not.toHaveBeenCalled();
+  });
+
+  it("does nothing for an already-revoked session", async () => {
+    repo.findSessionById.mockResolvedValue(activeSession({ revokedAt: new Date() }));
+
+    const res = await sendLogout(token);
+
+    expect(res.status).toBe(204);
+    expect(repo.revokeSession).not.toHaveBeenCalled();
+    expect(repo.revokeAllUserSessions).not.toHaveBeenCalled();
   });
 });
 

@@ -8,14 +8,11 @@ const authEnv = z
   .object({
     ACCESS_TOKEN_SECRET: secret("ACCESS_TOKEN_SECRET"),
     REFRESH_TOKEN_SECRET: secret("REFRESH_TOKEN_SECRET"),
-    VERIFICATION_TOKEN_SECRET: secret("VERIFICATION_TOKEN_SECRET"),
   })
   // Separate secrets only help if they are actually different.
   .refine(
-    (env) =>
-      new Set([env.ACCESS_TOKEN_SECRET, env.REFRESH_TOKEN_SECRET, env.VERIFICATION_TOKEN_SECRET])
-        .size === 3,
-    "ACCESS_TOKEN_SECRET, REFRESH_TOKEN_SECRET and VERIFICATION_TOKEN_SECRET must all be different",
+    (env) => env.ACCESS_TOKEN_SECRET !== env.REFRESH_TOKEN_SECRET,
+    "ACCESS_TOKEN_SECRET and REFRESH_TOKEN_SECRET must be different",
   )
   .parse(process.env);
 
@@ -25,7 +22,6 @@ export const authConfig = {
   tokens: {
     access: { secret: authEnv.ACCESS_TOKEN_SECRET, expiresIn: "1h" },
     refresh: { secret: authEnv.REFRESH_TOKEN_SECRET, expiresIn: `${REFRESH_TOKEN_TTL_DAYS}d` },
-    verify: { secret: authEnv.VERIFICATION_TOKEN_SECRET, expiresIn: "1h" },
   },
   // Same lifetime as the refresh JWT, in ms, for the Session row and the cookie.
   refreshTokenTtlMs: REFRESH_TOKEN_TTL_DAYS * 24 * 60 * 60 * 1000,

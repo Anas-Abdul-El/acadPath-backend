@@ -6,7 +6,7 @@ import type {
   NewStudent,
   SessionRecord,
   UserWithPassword,
-} from "../types/auth.types.js";
+} from "../types/auth/index.js";
 
 // The columns we read for a user; passwordHash is only added where login needs it.
 const authUserSelect = {
@@ -31,7 +31,9 @@ function toAuthUser(row: AuthUserRow): AuthUserDto {
 
 // Creates the user and their StudentProfile in one statement (Prisma wraps nested
 // creates in a transaction). Returns null if the email is already taken.
-export async function createStudent(data: NewStudent): Promise<AuthUserDto | null> {
+export async function createStudent(
+  data: NewStudent,
+): Promise<AuthUserDto | null> {
   try {
     const row = await prisma.user.create({
       data: {
@@ -47,14 +49,19 @@ export async function createStudent(data: NewStudent): Promise<AuthUserDto | nul
     // P2002 = unique constraint violation; email is the only unique field we set.
     // Relying on the constraint (instead of checking first) also covers two
     // sign-ins with the same email arriving at the same time.
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
       return null;
     }
     throw error;
   }
 }
 
-export async function findUserByEmail(email: string): Promise<UserWithPassword | null> {
+export async function findUserByEmail(
+  email: string,
+): Promise<UserWithPassword | null> {
   const row = await prisma.user.findUnique({
     where: { email },
     select: { ...authUserSelect, passwordHash: true },
@@ -67,7 +74,9 @@ export async function createSession(data: NewSession): Promise<void> {
   await prisma.session.create({ data });
 }
 
-export async function findSessionById(id: string): Promise<SessionRecord | null> {
+export async function findSessionById(
+  id: string,
+): Promise<SessionRecord | null> {
   const row = await prisma.session.findUnique({
     where: { id },
     select: {
@@ -93,7 +102,10 @@ export async function findSessionById(id: string): Promise<SessionRecord | null>
 // Revokes the old session and creates its replacement together. Returns false if the
 // old session was already revoked, e.g. a second refresh request with the same token
 // got here first; then nothing is created.
-export async function rotateSession(oldSessionId: string, newSession: NewSession): Promise<boolean> {
+export async function rotateSession(
+  oldSessionId: string,
+  newSession: NewSession,
+): Promise<boolean> {
   return prisma.$transaction(async (tx) => {
     const now = new Date();
     // The `revokedAt: null` condition makes this safe under concurrency: Postgres lets
@@ -106,6 +118,14 @@ export async function rotateSession(oldSessionId: string, newSession: NewSession
 
     await tx.session.create({ data: newSession });
     return true;
+  });
+}
+
+// Already-revoked sessions are left alone, so the original revokedAt is kept.
+export async function revokeSession(id: string): Promise<void> {
+  await prisma.session.updateMany({
+    where: { id, revokedAt: null },
+    data: { revokedAt: new Date() },
   });
 }
 
