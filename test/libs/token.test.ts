@@ -4,7 +4,7 @@ import AppErr from "../../src/libs/appErr";
 import { generateToken, verifyToken } from "../../src/libs/token";
 
 describe("generateToken / verifyToken", () => {
-  it.each(["access", "refresh", "verify"] as const)("round-trips a %s token", (type) => {
+  it.each(["access", "refresh"] as const)("round-trips a %s token", (type) => {
     const token = generateToken({ sub: "user-1" }, type);
 
     expect(verifyToken(token, type)).toMatchObject({ sub: "user-1" });

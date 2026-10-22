@@ -3,7 +3,7 @@ import bcrypt from "bcrypt";
 import { authConfig } from "../config/auth.js";
 import AppErr from "../libs/appErr.js";
 import { generateToken, verifyToken } from "../libs/token.js";
-import * as authRepository from "../repositories/auth.repository.js";
+import { authRepository } from "../repositories/index.js";
 import type { UserRole } from "../generated/prisma/enums.js";
 import type {
   AuthResult,
@@ -12,7 +12,7 @@ import type {
   NewSession,
   RefreshResult,
   SignInDto,
-} from "../types/auth.types.js";
+} from "../types/auth/index.js";
 
 // A real bcrypt hash (cost 12) of a password nobody uses. Login compares against it when
 // the email doesn't exist, so "unknown email" takes as long as "wrong password" and
@@ -111,4 +111,26 @@ export async function refresh(refreshToken: string | undefined): Promise<Refresh
     accessToken: signAccessToken({ id: session.userId, role: session.userRole }),
     refreshToken: next.token,
   };
+}
+
+// Revokes the session behind a refresh token. Logging out never fails: a missing,
+// invalid or already-revoked token just means there is no session left to end.
+export async function logout(refreshToken: string | undefined): Promise<void> {
+  if (!refreshToken) return;
+
+  let sessionId: unknown;
+  try {
+    sessionId = verifyToken(refreshToken, "refresh").sid;
+  } catch {
+    return;
+  }
+  if (typeof sessionId !== "string") return;
+
+  const session = await authRepository.findSessionById(sessionId);
+  if (!session || session.revokedAt) return;
+
+  // Only the exact token issued for the session can end it.
+  if (!(await bcrypt.compare(signatureOf(refreshToken), session.refreshTokenHash))) return;
+
+  await authRepository.revokeSession(session.id);
 }

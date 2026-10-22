@@ -1,7 +1,7 @@
 import type { CookieOptions, Request, Response } from "express";
 import { authConfig } from "../config/auth.js";
-import * as authService from "../services/auth.service.js";
-import type { LoginDto, SignInDto } from "../types/auth.types.js";
+import { authService } from "../services/index.js";
+import type { LoginDto, SignInDto } from "../types/auth/index.js";
 
 // httpOnly: page JavaScript can't read the cookie, so an XSS bug can't steal it.
 // sameSite "strict": the browser won't attach it to requests started by other sites.
@@ -40,4 +40,14 @@ export async function refresh(req: Request, res: Response) {
 
   res.cookie(authConfig.refreshCookieName, refreshToken, refreshCookieOptions);
   res.status(200).json({ data: { accessToken } });
+}
+
+export async function logout(req: Request, res: Response) {
+  const cookie: unknown = req.cookies[authConfig.refreshCookieName];
+  await authService.logout(typeof cookie === "string" ? cookie : undefined);
+
+  // The browser only deletes the cookie if path (and the other attributes) match the
+  // ones it was set with; clearCookie ignores maxAge.
+  res.clearCookie(authConfig.refreshCookieName, refreshCookieOptions);
+  res.status(204).end();
 }
