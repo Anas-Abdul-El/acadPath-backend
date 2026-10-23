@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken";
 import type { JwtPayload } from "jsonwebtoken";
 import { authConfig } from "../config/auth.js";
-import AppErr from "./appErr.js";
+import AppErr from "../libs/appErr.js";
 
 // The two kinds of token the API signs. Each kind is signed and verified with
 // its own secret, so a refresh token can never be replayed as an access token.
