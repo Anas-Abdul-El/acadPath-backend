@@ -5,7 +5,7 @@ import type { Express } from "express";
 import limiter from "./config/limiter";
 import AppErr from "./libs/appErr.js";
 import { errorHandler } from "./middlewares/index.js";
-import { authRouter } from "./routes/index.js";
+import routers from "./routes";
 
 const app: Express = express();
 
@@ -18,7 +18,7 @@ app.use(express.json({ limit: "100kb" }));
 app.use(cookieParser());
 
 // Routes
-app.use("/api/auth", authRouter);
+app.use("/api/", routers);
 
 // Nothing matched: hand a 404 to the error handler so it uses the standard error shape.
 app.use(() => {
