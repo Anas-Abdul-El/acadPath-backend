@@ -150,3 +150,6 @@ vite.config.ts.timestamp-*
 
 # Prisma generated client (rebuilt by `pnpm run build`)
 /src/generated/prisma
+
+# custom
+dto.md 

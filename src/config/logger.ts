@@ -18,7 +18,8 @@ const devFormat = combine(
   colorize(),
   timestamp({ format: "HH:mm:ss" }),
   printf(({ timestamp, level, message, stack, ...meta }) => {
-    const extra = Object.keys(meta).length > 0 ? ` ${JSON.stringify(meta)}` : "";
+    const extra =
+      Object.keys(meta).length > 0 ? ` ${JSON.stringify(meta)}` : "";
     const trace = typeof stack === "string" ? `\n${stack}` : "";
     return `${String(timestamp)} ${level}: ${String(message)}${extra}${trace}`;
   }),
@@ -30,7 +31,10 @@ const prodFormat = combine(timestamp(), json());
 const logger = winston.createLogger({
   level,
   // errors() copies an Error's message and stack onto the log entry.
-  format: combine(errors({ stack: true }), isProduction ? prodFormat : devFormat),
+  format: combine(
+    errors({ stack: true }),
+    isProduction ? prodFormat : devFormat,
+  ),
   transports: [new winston.transports.Console()],
   // Keep Jest output clean; tests can still spy on the logger.
   silent: env === "test",

@@ -35,6 +35,7 @@ export const verifyToken = (token: string, type: TokenType): JwtPayload => {
   }
 
   // We only ever sign objects, so a string payload isn't one of our tokens.
-  if (typeof payload === "string") throw new AppErr("Invalid or expired token", 401);
+  if (typeof payload === "string")
+    throw new AppErr("Invalid or expired token", 401);
   return payload;
 };
