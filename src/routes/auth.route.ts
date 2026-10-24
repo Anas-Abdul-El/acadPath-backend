@@ -24,7 +24,7 @@ authRouter.post(
 authRouter.post(
   "/refresh",
   validateCookie(authSchema.refreshTokenSchema, 401),
-  catchAsync((req: Request, res: Response) => {}),
+  catchAsync(authController.refresh),
 );
 
 authRouter.post(
