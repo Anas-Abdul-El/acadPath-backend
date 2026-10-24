@@ -1,4 +1,5 @@
 import z from "zod";
+import { UserRole, YearOfStudy } from "../generated/prisma/enums.js";
 
 /**
  * loginSchema validates the login request body.
@@ -20,6 +21,9 @@ export type LoginInput = z.infer<typeof loginSchema>;
  * Uses the same email and password rules as loginSchema, plus the user's profile fields.
  */
 export const signinSchema = z.object({
+  role: z.enum([UserRole.STUDENT, UserRole.ADMIN], {
+    error: "Role must be either STUDENT or ADMIN",
+  }),
   email: z.email({
     error: "Invalid Email",
   }),
@@ -28,9 +32,6 @@ export const signinSchema = z.object({
   }),
   name: z.string({
     error: "Name is required",
-  }),
-  yearOfStudy: z.string({
-    error: "Year of Study is required",
   }),
 });
 
