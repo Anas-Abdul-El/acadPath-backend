@@ -2,10 +2,10 @@ import express from "express";
 import helmet from "helmet";
 import cookieParser from "cookie-parser";
 import type { Express } from "express";
-import limiter from "./config/limiter";
+import limiter from "./config/limiter.js";
 import AppErr from "./libs/appErr.js";
 import { errorHandler } from "./middlewares/index.js";
-import routers from "./routes";
+import routers from "./routes/index.js";
 
 const app: Express = express();
 
