@@ -41,16 +41,24 @@ export const login = async (acc: LoginInput): Promise<PublicUser> => {
   return publicUser;
 };
 
-// The refresh token carries its session's id (sid), so logout and refresh can find the
-// session and bcrypt-compare the token against it.
+const signTokens = (user: PublicUser, sessionId: string) => {
+  // jti makes every refresh token unique, even two issued in the same second.
+  const refreshToken = generateToken(
+    { sub: user.id, role: user.role, sid: sessionId, jti: randomUUID() },
+    "refresh",
+  );
+  const accessToken = generateToken(
+    { sub: user.id, role: user.role },
+    "access",
+  );
+
+  return { accessToken, refreshToken };
+};
+
 export const startSession = async (user: PublicUser) => {
   const sessionId = randomUUID();
 
-  const refreshToken = generateToken(
-    { sub: user.id, role: user.role, sid: sessionId },
-    "refresh",
-  );
-  const accessToken = generateToken({ sub: user.id, role: user.role }, "access");
+  const { accessToken, refreshToken } = signTokens(user, sessionId);
 
   const refreshTokenHash = await createHash(getTokenSignature(refreshToken));
   await authRepo.createSession(sessionId, user.id, refreshTokenHash);
@@ -58,8 +66,6 @@ export const startSession = async (user: PublicUser) => {
   return { accessToken, refreshToken };
 };
 
-// Logout always succeeds: an invalid or expired token, or a session that is already
-// gone, just means there is nothing left to revoke.
 export const logout = async (refreshToken: string) => {
   let sessionId: unknown;
   try {
