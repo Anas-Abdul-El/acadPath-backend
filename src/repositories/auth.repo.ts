@@ -2,6 +2,7 @@ import { authConfig } from "../config/auth.js";
 import { YearOfStudy, type User } from "../generated/prisma/client.js";
 import { prisma } from "../libs/prisma.js";
 import type { SigninInput } from "../schemas/auth.schema.js";
+import type { PublicUser } from "../types/auth.dto.js";
 
 export const getUserByEmail = async (email: string): Promise<User | null> => {
   const user = await prisma.user.findUnique({
@@ -11,7 +12,9 @@ export const getUserByEmail = async (email: string): Promise<User | null> => {
   return user;
 };
 
-export const createAccount = async (account: SigninInput): Promise<User> => {
+export const createAccount = async (
+  account: SigninInput,
+): Promise<PublicUser> => {
   return prisma.user.create({
     data: {
       email: account.email,
@@ -19,6 +22,7 @@ export const createAccount = async (account: SigninInput): Promise<User> => {
       role: account.role,
       name: account.name,
     },
+    omit: { passwordHash: true },
   });
 };
 
