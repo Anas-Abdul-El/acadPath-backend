@@ -9,3 +9,5 @@ export interface SigninOutput {
     accessToken: string;
   };
 }
+
+export type LoginOutput = SigninOutput;
