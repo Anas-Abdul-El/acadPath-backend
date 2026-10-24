@@ -22,6 +22,13 @@ export const generateToken = (payload: object, type: TokenType): string => {
 };
 
 /**
+ * getTokenSignature returns the signature segment of a JWT. This is the part to hash when
+ * storing a token: bcrypt only reads the first 72 bytes, which for a whole JWT is just the
+ * header and the start of the payload, the same for every token of a user.
+ */
+export const getTokenSignature = (token: string): string => token.split(".")[2] ?? "";
+
+/**
  * verifyToken verifies the provided JWT based on its type ("access" or "refresh").
  * @param token - The JWT to verify.
  * @param type - The type the token is expected to be.
