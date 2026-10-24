@@ -14,7 +14,11 @@ export type TokenType = keyof typeof authConfig.tokens;
  */
 export const generateToken = (payload: object, type: TokenType): string => {
   const { secret, expiresIn } = authConfig.tokens[type];
-  return jwt.sign(payload, secret, { expiresIn, algorithm: "HS256" });
+  try {
+    return jwt.sign(payload, secret, { expiresIn, algorithm: "HS256" });
+  } catch {
+    throw new AppErr(`Failed to generate ${type} token`);
+  }
 };
 
 /**
