@@ -53,3 +53,28 @@ export const deleteSession = async (id: string) => {
     where: { id },
   });
 };
+
+// Only swaps the hash if it is still the one the caller checked, so two refreshes racing
+// with the same token can't both succeed. Returns false when the other one won.
+export const updateToken = async (
+  id: string,
+  oldRefreshTokenHash: string,
+  newRefreshTokenHash: string,
+): Promise<boolean> => {
+  const { count } = await prisma.session.updateMany({
+    where: { id, refreshTokenHash: oldRefreshTokenHash },
+    data: {
+      refreshTokenHash: newRefreshTokenHash,
+      lastUsedAt: new Date(),
+      expiresAt: new Date(Date.now() + authConfig.refreshTokenTtlMs),
+    },
+  });
+  return count === 1;
+};
+
+export const getUserById = async (id: string): Promise<PublicUser | null> => {
+  return prisma.user.findUnique({
+    where: { id },
+    omit: { passwordHash: true },
+  });
+};
