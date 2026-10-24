@@ -27,11 +27,13 @@ export const createAccount = async (
 };
 
 export const createSession = async (
+  id: string,
   userId: User["id"],
   refreshTokenHash: string,
 ) => {
   await prisma.session.create({
     data: {
+      id,
       userId,
       refreshTokenHash,
       expiresAt: new Date(Date.now() + authConfig.refreshTokenTtlMs),
