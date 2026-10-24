@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { validateBody, validateHeader } from "../middlewares/index.js";
+import { validateBody, validateCookie } from "../middlewares/index.js";
 import * as authSchema from "../schemas/auth.schema.js";
 import catchAsync from "../utils/catchAsync.js";
 import { authLimiter } from "../config/limiter.js";
@@ -23,13 +23,13 @@ authRouter.post(
 
 authRouter.post(
   "/refresh",
-  validateHeader(authSchema.refreshTokenSchema),
+  validateCookie(authSchema.refreshTokenSchema, 401),
   catchAsync((req: Request, res: Response) => {}),
 );
 
 authRouter.post(
   "/logout",
-  validateHeader(authSchema.logoutSchema),
+  validateCookie(authSchema.logoutSchema, 401),
   catchAsync((req: Request, res: Response) => {}),
 );
 
