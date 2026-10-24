@@ -12,7 +12,7 @@ authRouter.use(authLimiter);
 authRouter.post(
   "/login",
   validateBody(authSchema.loginSchema),
-  catchAsync((req: Request, res: Response) => {}),
+  catchAsync(authController.login),
 );
 
 authRouter.post(
