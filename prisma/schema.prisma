@@ -144,7 +144,6 @@ model Session {
   userId           String
   refreshTokenHash String    @unique
   expiresAt        DateTime
-  revokedAt        DateTime?
   lastUsedAt       DateTime  @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
