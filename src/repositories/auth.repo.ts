@@ -40,3 +40,16 @@ export const createSession = async (
     },
   });
 };
+
+export const getSessionById = async (id: string) => {
+  return prisma.session.findUnique({
+    where: { id },
+  });
+};
+
+export const deleteSession = async (id: string) => {
+  // deleteMany doesn't throw when the session is already gone (e.g. a double logout).
+  await prisma.session.deleteMany({
+    where: { id },
+  });
+};

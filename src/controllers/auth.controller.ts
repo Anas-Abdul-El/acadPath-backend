@@ -1,5 +1,9 @@
 import type { Request, Response, NextFunction, CookieOptions } from "express";
-import type { LoginInput, SigninInput } from "../schemas/auth.schema.js";
+import type {
+  LoginInput,
+  LogoutInput,
+  SigninInput,
+} from "../schemas/auth.schema.js";
 import authService from "../services/index.js";
 import { authConfig } from "../config/auth.js";
 import type { LoginOutput, SigninOutput } from "../types/auth.dto.js";
@@ -53,4 +57,13 @@ export const login = async (
       accessToken,
     },
   });
+};
+
+export const logout = async (req: Request, res: Response) => {
+  const { refreshToken } = res.locals.cookies as LogoutInput;
+
+  await authService.logout(refreshToken);
+
+  res.clearCookie(authConfig.refreshCookieName, refreshCookieOptions);
+  res.sendStatus(204);
 };
