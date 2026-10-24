@@ -4,11 +4,11 @@ import { prisma } from "../libs/prisma.js";
 import type { SigninInput } from "../schemas/auth.schema.js";
 
 export const getUserByEmail = async (email: string): Promise<User | null> => {
-  const user = prisma.user.findUnique({
+  const user = await prisma.user.findUnique({
     where: { email },
   });
 
-  return { ...user, passwordHash: null };
+  return user;
 };
 
 export const createAccount = async (account: SigninInput): Promise<User> => {
