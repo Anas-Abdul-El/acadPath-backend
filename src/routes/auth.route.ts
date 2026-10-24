@@ -30,7 +30,7 @@ authRouter.post(
 authRouter.post(
   "/logout",
   validateCookie(authSchema.logoutSchema, 401),
-  catchAsync((req: Request, res: Response) => {}),
+  catchAsync(authController.logout),
 );
 
 export default authRouter;
