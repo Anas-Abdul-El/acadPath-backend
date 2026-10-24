@@ -11,3 +11,5 @@ export interface SigninOutput {
 }
 
 export type LoginOutput = SigninOutput;
+
+export type RefreshOutput = SigninOutput;
