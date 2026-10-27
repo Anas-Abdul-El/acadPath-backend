@@ -1,11 +1,8 @@
 import type { Request, Response } from "express";
 import AppErr from "../libs/appErr.js";
 import * as meService from "../services/me.service.js";
-import type {
-  MeOutput,
-  SelectUniversityBody,
-  UniversityOutput,
-} from "../types/me.dto.js";
+import type { SelectUniversityBody } from "../schemas/me.schema.js";
+import type { MeOutput, UniversityOutput } from "../types/me.dto.js";
 
 export const getMe = async (req: Request, res: Response<MeOutput>) => {
   const authUser = res.locals.user;

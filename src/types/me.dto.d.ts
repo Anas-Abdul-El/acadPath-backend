@@ -69,7 +69,6 @@ export interface UniversityData {
   university: UniversityDto;
   major: MajorDto | null;
   catalog: CatalogDto;
-  replaced: boolean;
 }
 
 export interface UniversityOutput {
@@ -77,10 +76,3 @@ export interface UniversityOutput {
 }
 
 export type MissingData = "UNIVERSITY_AND_MAJOR" | "MAJOR";
-
-export interface SelectUniversityBody {
-  name: string;
-  country: string;
-  city: string;
-  major: string;
-}
