@@ -4,7 +4,11 @@ import {
   YearOfStudy,
 } from "../generated/prisma/client.js";
 import { z } from "zod";
-import { majorDataSchema, type MajorData } from "../schemas/me.schema.js";
+import {
+  majorDataSchema,
+  type MajorData,
+  type SelectUniversityBody,
+} from "../schemas/me.schema.js";
 import AppErr from "../libs/appErr.js";
 import { aiMessage } from "../libs/model.js";
 import {
@@ -19,7 +23,6 @@ import type {
   CatalogStatus,
   MajorDto,
   MeData,
-  SelectUniversityBody,
   UniversityData,
 } from "../types/me.dto.js";
 
@@ -94,7 +97,6 @@ const getHostname = (url: string): string | null => {
 export const toUniversityData = (
   university: UniversityInfo,
   major: MajorDto | null,
-  replaced = false,
 ): UniversityData => {
   const {
     sources,
@@ -117,7 +119,6 @@ export const toUniversityData = (
       courseCount,
       majorCount: _count.majors,
     },
-    replaced,
   };
 };
 

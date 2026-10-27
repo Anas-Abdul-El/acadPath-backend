@@ -1,5 +1,4 @@
 import OpenAI from "openai";
-import { SOURCE_DISCOVERY_PROMPT } from "./prompt.js";
 import { config } from "dotenv";
 
 config();
