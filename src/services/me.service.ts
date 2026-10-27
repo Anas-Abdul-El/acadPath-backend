@@ -8,6 +8,7 @@ import {
   majorDataSchema,
   type MajorData,
   type SelectUniversityBody,
+  type UploadSourcesInput,
 } from "../schemas/me.schema.js";
 import AppErr from "../libs/appErr.js";
 import { aiMessage } from "../libs/model.js";
@@ -24,6 +25,7 @@ import type {
   MajorDto,
   MeData,
   UniversityData,
+  UploadedSourceDto,
 } from "../types/me.dto.js";
 
 type UniversityInfo = NonNullable<
@@ -253,4 +255,14 @@ export const getUniversityById = async (
   major: string,
 ): Promise<UniversityInfo> => {
   return meRepo.getUniversityById(id, major);
+};
+
+export const getUploadedSources = (
+  files: UploadSourcesInput,
+): UploadedSourceDto[] => {
+  return files.map((file) => ({
+    title: file.originalname,
+    sourceType: file.sourceType,
+    size: file.size,
+  }));
 };

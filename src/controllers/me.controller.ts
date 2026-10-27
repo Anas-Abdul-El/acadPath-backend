@@ -1,8 +1,15 @@
 import type { Request, Response } from "express";
 import AppErr from "../libs/appErr.js";
 import * as meService from "../services/me.service.js";
-import type { SelectUniversityBody } from "../schemas/me.schema.js";
-import type { MeOutput, UniversityOutput } from "../types/me.dto.js";
+import type {
+  SelectUniversityBody,
+  UploadSourcesInput,
+} from "../schemas/me.schema.js";
+import type {
+  MeOutput,
+  UniversityOutput,
+  UploadSourcesOutput,
+} from "../types/me.dto.js";
 
 export const getMe = async (req: Request, res: Response<MeOutput>) => {
   const authUser = res.locals.user;
@@ -42,4 +49,13 @@ export const selectUniversity = async (
   );
 
   res.send({ data: meService.toUniversityData(updated, major) });
+};
+
+export const uploadSources = async (
+  req: Request,
+  res: Response<UploadSourcesOutput>,
+) => {
+  const files: UploadSourcesInput = res.locals.files;
+
+  res.send({ data: meService.getUploadedSources(files) });
 };
