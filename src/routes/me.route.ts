@@ -7,4 +7,10 @@ const meRouter: Router = Router();
 
 meRouter.get("/", authenticate, catchAsync(meController.getMe));
 
+meRouter.put(
+  "/university",
+  authenticate,
+  catchAsync(meController.selectUniversity),
+);
+
 export default meRouter;

@@ -10,6 +10,7 @@ export interface ParsedPage {
   title: string;
   headings: string[];
   links: ParsedLink[];
+  text: string;
 }
 
 // Pure function: takes raw HTML and pulls out the pieces we care about.
@@ -41,7 +42,10 @@ export function parseHtml(html: string, baseUrl?: string): ParsedPage {
     links.push({ text: $(el).text().trim(), href });
   });
 
-  return { title, headings, links };
+  $("script, style, noscript").remove();
+  const text = $("body").text().replace(/\s+/g, " ").trim();
+
+  return { title, headings, links, text };
 }
 
 export async function fetchAndParse(url: string): Promise<ParsedPage> {
