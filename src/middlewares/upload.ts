@@ -1,7 +1,7 @@
 import multer from "multer";
 import AppErr from "../libs/appErr.js";
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024;
+const MAX_FILE_SIZE = 25 * 1024 * 1024;
 
 const ALLOWED_TYPES = new Set([
   "application/pdf",
@@ -12,10 +12,10 @@ const ALLOWED_TYPES = new Set([
 
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: MAX_FILE_SIZE, files: 1 },
+  limits: { fileSize: MAX_FILE_SIZE, files: 20 },
   fileFilter: (_req, file, cb) => {
     if (!ALLOWED_TYPES.has(file.mimetype))
-      return cb(new AppErr("Only PDF, PNG, JPEG or WebP files are allowed", 400));
+      return cb(new AppErr("Only PDF, PNG, JPEG or WebP files are allowed", 415));
     cb(null, true);
   },
 });

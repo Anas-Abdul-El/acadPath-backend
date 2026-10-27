@@ -32,7 +32,8 @@ export function errorHandler(error: unknown, _req: Request, res: Response, _next
   }
 
   if (error instanceof MulterError) {
-    res.status(400).json({ error: { message: error.message } });
+    const status = error.code === "LIMIT_FILE_SIZE" ? 413 : 400;
+    res.status(status).json({ error: { message: error.message } });
     return;
   }
 
