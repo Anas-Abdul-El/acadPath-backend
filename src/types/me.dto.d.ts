@@ -57,3 +57,22 @@ export interface MeData {
 export interface MeOutput {
   data: MeData;
 }
+export interface CatalogDto {
+  status: CatalogStatus;
+  title: string | null;
+  source: string | null;
+  courseCount: number;
+  majorCount: number;
+}
+
+export interface UniversityData {
+  university: UniversityDto;
+  major: MajorDto | null;
+  catalog: CatalogDto;
+}
+
+export interface UniversityOutput {
+  data: UniversityData;
+}
+
+export type MissingData = "UNIVERSITY_AND_MAJOR" | "MAJOR";
