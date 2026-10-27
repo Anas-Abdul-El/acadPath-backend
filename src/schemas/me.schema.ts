@@ -1,5 +1,70 @@
 import z from "zod";
-import { CourseCategory, Term } from "../generated/prisma/enums.js";
+import {
+  CourseCategory,
+  SourceType,
+  Term,
+} from "../generated/prisma/enums.js";
+
+const MAX_SOURCE_FILE_SIZE = 25 * 1024 * 1024;
+const MAX_SOURCES_TOTAL_SIZE = 150 * 1024 * 1024;
+
+const signature = (buffer: Buffer, start: number, end: number): string =>
+  buffer.subarray(start, end).toString("latin1");
+
+const detectSourceType = (buffer: Buffer): SourceType | null => {
+  if (signature(buffer, 0, 4) === "%PDF") return SourceType.PDF;
+
+  const isPng = signature(buffer, 0, 8) === "\x89PNG\r\n\x1a\n";
+  const isJpeg = signature(buffer, 0, 3) === "\xff\xd8\xff";
+  const isWebp =
+    signature(buffer, 0, 4) === "RIFF" && signature(buffer, 8, 12) === "WEBP";
+  if (isPng || isJpeg || isWebp) return SourceType.IMAGE;
+
+  return null;
+};
+
+const sourceFileSchema = z
+  .object({
+    originalname: z.string(),
+    size: z
+      .number()
+      .int()
+      .positive({ error: "File is empty" })
+      .max(MAX_SOURCE_FILE_SIZE, { error: "Each file must be 25 MB or smaller" }),
+    buffer: z.instanceof(Buffer),
+  })
+  .transform((file, ctx) => {
+    const sourceType = detectSourceType(file.buffer);
+    if (!sourceType) {
+      ctx.issues.push({
+        code: "custom",
+        message: "File must be a PDF, PNG, JPEG or WebP",
+        input: file,
+      });
+      return z.NEVER;
+    }
+
+    return { ...file, sourceType };
+  });
+
+/**
+ * uploadSourcesSchema validates the files of POST /me/university/sources.
+ * 1–20 non-empty files, ≤ 25 MB each and ≤ 150 MB total. The type is read
+ * from the file's bytes, not its extension or mimetype.
+ */
+export const uploadSourcesSchema = z
+  .array(sourceFileSchema, { error: "Upload at least one file" })
+  .min(1, { error: "Upload at least one file" })
+  .max(20, { error: "Upload at most 20 files" })
+  .refine(
+    (files) =>
+      files.reduce((total, file) => total + file.size, 0) <=
+      MAX_SOURCES_TOTAL_SIZE,
+    { error: "Files must be 150 MB or smaller in total" },
+  );
+
+/** UploadSourcesInput is the validated files, each with its detected sourceType. */
+export type UploadSourcesInput = z.infer<typeof uploadSourcesSchema>;
 
 /**
  * selectUniversitySchema validates the PUT /me/university request body.
