@@ -1,4 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
+import { MulterError } from "multer";
 import logger from "../config/logger.js";
 import AppErr from "../libs/appErr.js";
 
@@ -27,6 +28,11 @@ export function errorHandler(error: unknown, _req: Request, res: Response, _next
     res.status(error.statusCode).json({
       error: { message: error.message, ...(error.details && { details: error.details }) },
     });
+    return;
+  }
+
+  if (error instanceof MulterError) {
+    res.status(400).json({ error: { message: error.message } });
     return;
   }
 
