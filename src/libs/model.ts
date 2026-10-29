@@ -1,5 +1,7 @@
 import OpenAI from "openai";
+import { GoogleGenAI } from "@google/genai";
 import { config } from "dotenv";
+import { IMAGE_EXTRACTION_PROMPT } from "./prompt.js";
 
 config();
 
@@ -35,4 +37,29 @@ export const aiMessage = async (
   });
 
   return response.choices[0]?.message.content ?? null;
+};
+
+const gemini = new GoogleGenAI({
+  apiKey: process.env.GEMINI_API_KEY!,
+});
+
+export const geminiMessage = async (
+  content: string,
+  images: { buffer: Buffer; mimeType: string }[],
+): Promise<string | null> => {
+  const response = await gemini.models.generateContent({
+    model: "gemini-2.5-flash",
+    contents: [
+      { text: content },
+      ...images.map(({ buffer, mimeType }) => ({
+        inlineData: { data: buffer.toString("base64"), mimeType },
+      })),
+    ],
+    config: {
+      systemInstruction: IMAGE_EXTRACTION_PROMPT,
+      responseMimeType: "application/json",
+    },
+  });
+
+  return response.text ?? null;
 };
