@@ -132,9 +132,10 @@ model User {
   role         UserRole @default(STUDENT)
   isDeleted    Boolean @default(false)
 
-  sessions       Session[]
-  studentProfile StudentProfile?
-  editedCourses  Course[]        @relation("CourseEditor")
+  sessions        Session[]
+  studentProfile  StudentProfile?
+  editedCourses   Course[]               @relation("CourseEditor")
+  uploadedSources CourseMaterialSource[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -251,8 +252,10 @@ model CourseMaterialSource {
   lastFetchedAt   DateTime?
   lastProcessedAt DateTime?
   errorMessage    String?          @db.Text
+  uploadedById    String?
 
   university University @relation(fields: [universityId], references: [id], onDelete: Cascade)
+  uploadedBy User?      @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
