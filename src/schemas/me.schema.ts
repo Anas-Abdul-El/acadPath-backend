@@ -31,6 +31,7 @@ const sourceFileSchema = z
       .int()
       .positive({ error: "File is empty" })
       .max(MAX_SOURCE_FILE_SIZE, { error: "Each file must be 25 MB or smaller" }),
+    mimetype: z.string(),
     buffer: z.instanceof(Buffer),
   })
   .transform((file, ctx) => {
