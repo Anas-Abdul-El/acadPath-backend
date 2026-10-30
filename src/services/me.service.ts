@@ -26,7 +26,6 @@ import type {
   MajorDto,
   MeData,
   UniversityData,
-  UploadedSourceDto,
 } from "../types/me.dto.js";
 
 type UniversityInfo = NonNullable<
@@ -333,12 +332,10 @@ export const getUniversityById = async (
   return meRepo.getUniversityById(id, major);
 };
 
-export const getUploadedSources = (
-  files: UploadSourcesInput,
-): UploadedSourceDto[] => {
+export const toUploadedSources = (files: UploadSourcesInput): SavedSource[] => {
   return files.map((file) => ({
     title: file.originalname,
-    sourceType: file.sourceType,
-    size: file.size,
+    url: file.originalname,
+    type: file.sourceType === SourceType.PDF ? "pdf" : "image",
   }));
 };

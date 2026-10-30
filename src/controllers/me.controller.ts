@@ -5,11 +5,7 @@ import type {
   SelectUniversityBody,
   UploadSourcesInput,
 } from "../schemas/me.schema.js";
-import type {
-  MeOutput,
-  UniversityOutput,
-  UploadSourcesOutput,
-} from "../types/me.dto.js";
+import type { MeOutput, UniversityOutput } from "../types/me.dto.js";
 
 export const getMe = async (req: Request, res: Response<MeOutput>) => {
   const authUser = res.locals.user;
@@ -52,10 +48,31 @@ export const selectUniversity = async (
 };
 
 export const uploadSources = async (
-  req: Request,
-  res: Response<UploadSourcesOutput>,
+  req: Request<unknown, unknown, SelectUniversityBody>,
+  res: Response<UniversityOutput>,
 ) => {
   const files: UploadSourcesInput = res.locals.files;
 
-  res.send({ data: meService.getUploadedSources(files) });
+  const found = await meService.findUniversity(req.body);
+  const university =
+    found.university ?? (await meService.createUniversity(req.body));
+
+  const majorData = await meService.extractMajorDataFromFiles(req.body, files);
+  if (!majorData.major)
+    throw new AppErr(
+      `Could not find ${req.body.major} in the uploaded files`,
+      422,
+    );
+
+  const major = await meService.saveMajorData(
+    university.id,
+    majorData,
+    meService.toUploadedSources(files),
+  );
+  const updated = await meService.getUniversityById(
+    university.id,
+    major?.name ?? req.body.major,
+  );
+
+  res.send({ data: meService.toUniversityData(updated, major) });
 };

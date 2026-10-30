@@ -1,6 +1,5 @@
 import type {
   DegreeType,
-  SourceType,
   UserRole,
   YearOfStudy,
 } from "../generated/prisma/enums.js";
@@ -77,13 +76,3 @@ export interface UniversityOutput {
 }
 
 export type MissingData = "UNIVERSITY_AND_MAJOR" | "MAJOR";
-
-export interface UploadedSourceDto {
-  title: string;
-  sourceType: SourceType;
-  size: number;
-}
-
-export interface UploadSourcesOutput {
-  data: UploadedSourceDto[];
-}

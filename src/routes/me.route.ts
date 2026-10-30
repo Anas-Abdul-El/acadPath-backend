@@ -27,6 +27,7 @@ meRouter.post(
   "/university/sources",
   authenticate,
   upload.array("files", 20),
+  validateBody(selectUniversitySchema),
   validateFiles(uploadSourcesSchema),
   catchAsync(meController.uploadSources),
 );
