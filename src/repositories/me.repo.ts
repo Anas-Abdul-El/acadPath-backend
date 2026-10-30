@@ -91,32 +91,10 @@ const universitySelect = (major: string) =>
     _count: { select: { majors: true } },
   }) as const satisfies Prisma.UniversitySelect;
 
-export const findUniversity = async ({
-  name,
-  country,
-  major,
-}: {
-  name: string;
-  country: string;
-  major: string;
-}) => {
-  const university = await prisma.university.findFirst({
-    where: {
-      OR: [
-        { name: { equals: name, mode: "insensitive" } },
-        { shortName: { equals: name, mode: "insensitive" } },
-      ],
-      country: { equals: country, mode: "insensitive" },
-    },
-    select: universitySelect(major),
+export const listUniversities = async () => {
+  return prisma.university.findMany({
+    select: { id: true, name: true, shortName: true, country: true },
   });
-  if (!university) return null;
-
-  const courseCount = await prisma.course.count({
-    where: { major: { universityId: university.id } },
-  });
-
-  return { ...university, courseCount };
 };
 
 export const createUniversity = async ({

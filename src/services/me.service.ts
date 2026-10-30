@@ -28,9 +28,7 @@ import type {
   UniversityData,
 } from "../types/me.dto.js";
 
-type UniversityInfo = NonNullable<
-  Awaited<ReturnType<typeof meRepo.findUniversity>>
->;
+type UniversityInfo = Awaited<ReturnType<typeof meRepo.getUniversityById>>;
 
 interface SourceState {
   errorMessage: string | null;
@@ -124,21 +122,38 @@ export const toUniversityData = (
   };
 };
 
+const clean = (value: string): string => value.trim().replace(/\s+/g, " ");
+
 const normalize = (value: string): string =>
-  value.trim().replace(/\s+/g, " ").toLowerCase();
+  clean(value)
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "")
+    .toLowerCase()
+    .replace(/^the /, "");
 
 export const findUniversity = async (input: {
   name: string;
   country: string;
   major: string;
 }): Promise<{ university: UniversityInfo | null; major: MajorDto | null }> => {
-  const university = await meRepo.findUniversity({
-    name: normalize(input.name),
-    country: normalize(input.country),
-    major: input.major.trim(),
-  });
+  const name = normalize(input.name);
+  const country = normalize(input.country);
 
-  return { university, major: university?.majors[0] ?? null };
+  const universities = await meRepo.listUniversities();
+  const match = universities.find(
+    (university) =>
+      normalize(university.country) === country &&
+      (normalize(university.name) === name ||
+        (university.shortName !== null &&
+          normalize(university.shortName) === name)),
+  );
+  if (!match) return { university: null, major: null };
+
+  const university = await meRepo.getUniversityById(
+    match.id,
+    input.major.trim(),
+  );
+  return { university, major: university.majors[0] ?? null };
 };
 
 export const createUniversity = async (input: {
@@ -148,9 +163,9 @@ export const createUniversity = async (input: {
   major: string;
 }): Promise<UniversityInfo> => {
   return meRepo.createUniversity({
-    name: normalize(input.name),
-    country: normalize(input.country),
-    city: normalize(input.city),
+    name: clean(input.name),
+    country: clean(input.country),
+    city: clean(input.city),
     major: input.major.trim(),
   });
 };
