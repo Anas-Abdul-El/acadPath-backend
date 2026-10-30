@@ -67,23 +67,39 @@ export const uploadSourcesSchema = z
 /** UploadSourcesInput is the validated files, each with its detected sourceType. */
 export type UploadSourcesInput = z.infer<typeof uploadSourcesSchema>;
 
+const PLACE_NAME = /^[\p{L}\p{M}\s.'’()-]+$/u;
+
 /**
  * selectUniversitySchema validates the PUT /me/university request body.
- * Every field is required and trimmed.
+ * Same rules as the frontend's universityStepSchema: every field is trimmed,
+ * country and city are letters only.
  */
 export const selectUniversitySchema = z.object({
-  name: z.string({ error: "University name is required" }).trim().min(1, {
-    error: "University name is required",
-  }),
-  country: z.string({ error: "Country is required" }).trim().min(1, {
-    error: "Country is required",
-  }),
-  city: z.string({ error: "City is required" }).trim().min(1, {
-    error: "City is required",
-  }),
-  major: z.string({ error: "Major is required" }).trim().min(1, {
-    error: "Major is required",
-  }),
+  name: z
+    .string({ error: "University name is required" })
+    .trim()
+    .min(1, { error: "University name is required" })
+    .min(3, { error: "Enter your university's full name" })
+    .max(120, { error: "Use 120 characters or fewer" }),
+  country: z
+    .string({ error: "Country is required" })
+    .trim()
+    .min(1, { error: "Country is required" })
+    .min(2, { error: "Enter the full country name" })
+    .max(60, { error: "Use 60 characters or fewer" })
+    .regex(PLACE_NAME, { error: "Use letters only" }),
+  city: z
+    .string({ error: "City is required" })
+    .trim()
+    .min(1, { error: "City is required" })
+    .max(80, { error: "Use 80 characters or fewer" })
+    .regex(PLACE_NAME, { error: "Use letters only" }),
+  major: z
+    .string({ error: "Major is required" })
+    .trim()
+    .min(1, { error: "Major is required" })
+    .min(2, { error: "Enter your major's full name" })
+    .max(100, { error: "Use 100 characters or fewer" }),
 });
 
 /** SelectUniversityBody is the validated body: { name, country, city, major }. */
