@@ -1,5 +1,6 @@
 import {
   type ProcessingStatus,
+  SourceType,
   UserRole,
   YearOfStudy,
 } from "../generated/prisma/client.js";
@@ -11,7 +12,7 @@ import {
   type UploadSourcesInput,
 } from "../schemas/me.schema.js";
 import AppErr from "../libs/appErr.js";
-import { aiMessage } from "../libs/model.js";
+import { aiMessage, geminiMessage } from "../libs/model.js";
 import {
   COURSE_EXTRACTION_PROMPT,
   SOURCE_DISCOVERY_PROMPT,
@@ -214,8 +215,10 @@ export const parseSources = async (urls: string[]): Promise<ParsedSource[]> => {
   );
 };
 
+type MajorInput = Pick<SelectUniversityBody, "name" | "major">;
+
 export const extractMajorData = async (
-  input: SelectUniversityBody,
+  input: MajorInput,
   sources: ParsedSource[],
 ): Promise<MajorData> => {
   if (sources.length === 0) return { major: null, courses: [] };
@@ -233,6 +236,73 @@ export const extractMajorData = async (
   if (!result.success) throw new AppErr("AI returned invalid major data", 502);
 
   return result.data;
+};
+
+type UploadedFile = UploadSourcesInput[number];
+
+const parseUploadedPdf = async (file: UploadedFile): Promise<ParsedSource> => {
+  try {
+    const text = await parsePdf({ type: "buffer", buffer: file.buffer });
+    return { url: file.originalname, type: "pdf", text };
+  } catch {
+    throw new AppErr(`Could not read ${file.originalname}`, 422);
+  }
+};
+
+const extractMajorDataFromPdfs = async (
+  input: MajorInput,
+  files: UploadedFile[],
+): Promise<MajorData> => {
+  const parsed = await Promise.all(files.map(parseUploadedPdf));
+  return extractMajorData(
+    input,
+    parsed.filter((source) => source.text.length > 0),
+  );
+};
+
+const extractMajorDataFromImages = async (
+  input: MajorInput,
+  files: UploadedFile[],
+): Promise<MajorData> => {
+  if (files.length === 0) return { major: null, courses: [] };
+
+  const reply = await geminiMessage(
+    JSON.stringify({
+      universityName: input.name.trim(),
+      majorName: input.major.trim(),
+    }),
+    files.map((file) => ({ buffer: file.buffer, mimeType: file.mimetype })),
+  );
+
+  const result = majorDataSchema.safeParse(parseAiJson(reply));
+  if (!result.success) throw new AppErr("AI returned invalid major data", 502);
+
+  return result.data;
+};
+
+export const extractMajorDataFromFiles = async (
+  input: MajorInput,
+  files: UploadSourcesInput,
+): Promise<MajorData> => {
+  const pdfs = files.filter((file) => file.sourceType === SourceType.PDF);
+  const images = files.filter((file) => file.sourceType === SourceType.IMAGE);
+
+  const [fromPdfs, fromImages] = await Promise.all([
+    extractMajorDataFromPdfs(input, pdfs),
+    extractMajorDataFromImages(input, images),
+  ]);
+
+  const courses = new Map(
+    [...fromImages.courses, ...fromPdfs.courses].map((course) => [
+      course.code,
+      course,
+    ]),
+  );
+
+  return {
+    major: fromPdfs.major ?? fromImages.major,
+    courses: [...courses.values()],
+  };
 };
 
 export const saveMajorData = async (
