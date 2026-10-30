@@ -34,6 +34,7 @@ export const getUserInfo = async (id: string) => {
                   errorMessage: true,
                   lastProcessedAt: true,
                   lastFetchedAt: true,
+                  uploadedById: true,
                 },
               },
             },
@@ -131,6 +132,53 @@ export const getUniversityById = async (id: string, major: string) => {
   return { ...university, courseCount };
 };
 
+export const saveSelection = async (
+  userId: string,
+  universityId: string,
+  majorId: string | null,
+) => {
+  return prisma.studentProfile.upsert({
+    where: { userId },
+    create: { userId, universityId, majorId },
+    update: { universityId, majorId },
+    select: { id: true },
+  });
+};
+
+export const getSelection = async (userId: string) => {
+  return prisma.studentProfile.findUnique({
+    where: { userId },
+    select: {
+      university: { select: { id: true, name: true } },
+      major: { select: { id: true, name: true } },
+    },
+  });
+};
+
+export const getUniversitySources = async (userId: string) => {
+  return prisma.studentProfile.findUnique({
+    where: { userId },
+    select: {
+      university: {
+        select: {
+          sources: {
+            select: {
+              id: true,
+              title: true,
+              sourceType: true,
+              errorMessage: true,
+              lastFetchedAt: true,
+              lastProcessedAt: true,
+              createdAt: true,
+            },
+            orderBy: { createdAt: "desc" },
+          },
+        },
+      },
+    },
+  });
+};
+
 const sourceTypes = {
   pdf: SourceType.PDF,
   html: SourceType.HTML,
@@ -141,7 +189,12 @@ export const saveMajorData = async (
   universityId: string,
   major: NonNullable<MajorData["major"]>,
   courses: MajorData["courses"],
-  sources: { title?: string; url: string; type: "pdf" | "html" | "image" }[],
+  sources: {
+    title?: string;
+    url: string;
+    type: "pdf" | "html" | "image";
+    uploadedById?: string;
+  }[],
 ) => {
   return prisma.$transaction(async (tx) => {
     const savedMajor = await tx.major.upsert({
@@ -151,7 +204,10 @@ export const saveMajorData = async (
         name: major.name,
         totalRequiredCredits: major.totalRequiredCredits,
       },
-      update: {},
+      update:
+        major.totalRequiredCredits === null
+          ? {}
+          : { totalRequiredCredits: major.totalRequiredCredits },
       select: {
         id: true,
         universityId: true,
@@ -213,6 +269,7 @@ export const saveMajorData = async (
         title: source.title ?? null,
         url: source.url,
         sourceType: sourceTypes[source.type],
+        uploadedById: source.uploadedById ?? null,
         lastFetchedAt: now,
         lastProcessedAt: now,
       })),

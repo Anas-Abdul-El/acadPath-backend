@@ -5,7 +5,12 @@ import type {
   SelectUniversityBody,
   UploadSourcesInput,
 } from "../schemas/me.schema.js";
-import type { MeOutput, UniversityOutput } from "../types/me.dto.js";
+import type {
+  MeOutput,
+  SelectUniversityOutput,
+  UniversityOutput,
+  UniversitySourcesOutput,
+} from "../types/me.dto.js";
 
 export const getMe = async (req: Request, res: Response<MeOutput>) => {
   const authUser = res.locals.user;
@@ -18,15 +23,26 @@ export const getMe = async (req: Request, res: Response<MeOutput>) => {
 
 export const selectUniversity = async (
   req: Request<unknown, unknown, SelectUniversityBody>,
-  res: Response<UniversityOutput>,
+  res: Response<SelectUniversityOutput>,
 ) => {
+  const authUser = res.locals.user;
+  if (!authUser) throw new AppErr("Missing or malformed access token", 401);
+
   const found = await meService.findUniversity(req.body);
   const university =
     found.university ?? (await meService.createUniversity(req.body));
 
   if (found.major) {
+    const replaced = await meService.saveSelection(
+      authUser.id,
+      university.id,
+      found.major.id,
+    );
     return res.send({
-      data: meService.toUniversityData(university, found.major),
+      data: {
+        ...meService.toUniversityData(university, found.major),
+        replaced,
+      },
     });
   }
 
@@ -36,43 +52,59 @@ export const selectUniversity = async (
 
   const major = await meService.saveMajorData(
     university.id,
+    majorData.major?.name ?? req.body.major,
     majorData,
     parsedSources,
   );
-  const updated = await meService.getUniversityById(
+  const replaced = await meService.saveSelection(
+    authUser.id,
     university.id,
-    major?.name ?? req.body.major,
+    major.id,
   );
+  const updated = await meService.getUniversityById(university.id, major.name);
 
-  res.send({ data: meService.toUniversityData(updated, major) });
+  res.send({ data: { ...meService.toUniversityData(updated, major), replaced } });
 };
 
 export const uploadSources = async (
-  req: Request<unknown, unknown, SelectUniversityBody>,
+  req: Request,
   res: Response<UniversityOutput>,
 ) => {
+  const authUser = res.locals.user;
+  if (!authUser) throw new AppErr("Missing or malformed access token", 401);
+
   const files: UploadSourcesInput = res.locals.files;
+  const { university, major } = await meService.getSelection(authUser.id);
 
-  const found = await meService.findUniversity(req.body);
-  const university =
-    found.university ?? (await meService.createUniversity(req.body));
-
-  const majorData = await meService.extractMajorDataFromFiles(req.body, files);
+  const majorData = await meService.extractMajorDataFromFiles(
+    { name: university.name, major: major.name },
+    files,
+  );
   if (!majorData.major)
     throw new AppErr(
-      `Could not find ${req.body.major} in the uploaded files`,
+      `Could not find ${major.name} in the uploaded files`,
       422,
     );
 
-  const major = await meService.saveMajorData(
+  const saved = await meService.saveMajorData(
     university.id,
+    major.name,
     majorData,
-    meService.toUploadedSources(files),
+    meService.toUploadedSources(authUser.id, files),
   );
-  const updated = await meService.getUniversityById(
-    university.id,
-    major?.name ?? req.body.major,
-  );
+  const updated = await meService.getUniversityById(university.id, saved.name);
 
-  res.send({ data: meService.toUniversityData(updated, major) });
+  res.send({ data: meService.toUniversityData(updated, saved) });
+};
+
+export const getUniversitySources = async (
+  req: Request,
+  res: Response<UniversitySourcesOutput>,
+) => {
+  const authUser = res.locals.user;
+  if (!authUser) throw new AppErr("Missing or malformed access token", 401);
+
+  const data = await meService.getUniversitySources(authUser.id);
+
+  res.send({ data });
 };

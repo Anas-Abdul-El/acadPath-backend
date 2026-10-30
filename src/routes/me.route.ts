@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   authenticate,
+  authorize,
   upload,
   validateBody,
   validateFiles,
@@ -19,15 +20,23 @@ meRouter.get("/", authenticate, catchAsync(meController.getMe));
 meRouter.put(
   "/university",
   authenticate,
+  authorize("STUDENT"),
   validateBody(selectUniversitySchema),
   catchAsync(meController.selectUniversity),
+);
+
+meRouter.get(
+  "/university/sources",
+  authenticate,
+  authorize("STUDENT"),
+  catchAsync(meController.getUniversitySources),
 );
 
 meRouter.post(
   "/university/sources",
   authenticate,
+  authorize("STUDENT"),
   upload.array("files", 20),
-  validateBody(selectUniversitySchema),
   validateFiles(uploadSourcesSchema),
   catchAsync(meController.uploadSources),
 );

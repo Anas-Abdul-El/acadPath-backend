@@ -1,5 +1,7 @@
 import type {
   DegreeType,
+  ProcessingStatus,
+  SourceType,
   UserRole,
   YearOfStudy,
 } from "../generated/prisma/enums.js";
@@ -75,4 +77,21 @@ export interface UniversityOutput {
   data: UniversityData;
 }
 
+export interface SelectUniversityOutput {
+  data: UniversityData & { replaced: boolean };
+}
+
 export type MissingData = "UNIVERSITY_AND_MAJOR" | "MAJOR";
+
+export interface UniversitySourceDto {
+  id: string;
+  title: string | null;
+  sourceType: SourceType;
+  status: ProcessingStatus;
+  errorMessage: string | null;
+  createdAt: string;
+}
+
+export interface UniversitySourcesOutput {
+  data: UniversitySourceDto[];
+}

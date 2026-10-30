@@ -26,6 +26,7 @@ import type {
   MajorDto,
   MeData,
   UniversityData,
+  UniversitySourceDto,
 } from "../types/me.dto.js";
 
 type UniversityInfo = Awaited<ReturnType<typeof meRepo.getUniversityById>>;
@@ -81,7 +82,9 @@ export const getMe = async (userId: string): Promise<MeData> => {
     onboarding: {
       universitySelected: university !== null,
       catalogStatus: university ? getCatalogStatus(university.sources) : null,
-      universityDocumentsUploaded: (university?.sources.length ?? 0) > 0,
+      universityDocumentsUploaded:
+        university?.sources.some((source) => source.uploadedById === user.id) ??
+        false,
       yearOfStudySelected: yearOfStudy !== null,
       transcriptRequired: yearOfStudy !== YearOfStudy.NEW_STUDENT,
       transcriptUploaded: transcriptCount > 0,
@@ -212,6 +215,7 @@ export interface SavedSource {
   title?: string;
   url: string;
   type: "pdf" | "html" | "image";
+  uploadedById?: string;
 }
 
 const parseSource = async (url: string): Promise<ParsedSource | null> => {
@@ -327,14 +331,16 @@ export const extractMajorDataFromFiles = async (
 
 export const saveMajorData = async (
   universityId: string,
+  majorName: string,
   majorData: MajorData,
   sources: SavedSource[],
-): Promise<MajorDto | null> => {
-  if (!majorData.major) return null;
-
+): Promise<MajorDto> => {
   return meRepo.saveMajorData(
     universityId,
-    majorData.major,
+    {
+      name: majorName.trim(),
+      totalRequiredCredits: majorData.major?.totalRequiredCredits ?? null,
+    },
     majorData.courses,
     sources,
   );
@@ -347,10 +353,51 @@ export const getUniversityById = async (
   return meRepo.getUniversityById(id, major);
 };
 
-export const toUploadedSources = (files: UploadSourcesInput): SavedSource[] => {
+export const saveSelection = async (
+  userId: string,
+  universityId: string,
+  majorId: string | null,
+): Promise<boolean> => {
+  const previous = await meRepo.getSelection(userId);
+  await meRepo.saveSelection(userId, universityId, majorId);
+
+  const previousId = previous?.university?.id ?? null;
+  return previousId !== null && previousId !== universityId;
+};
+
+export const getSelection = async (userId: string) => {
+  const profile = await meRepo.getSelection(userId);
+  if (!profile?.university || !profile.major)
+    throw new AppErr("Select your university first", 422);
+
+  return { university: profile.university, major: profile.major };
+};
+
+export const getUniversitySources = async (
+  userId: string,
+): Promise<UniversitySourceDto[]> => {
+  const profile = await meRepo.getUniversitySources(userId);
+  if (!profile?.university)
+    throw new AppErr("Select your university first", 422);
+
+  return profile.university.sources.map((source) => ({
+    id: source.id,
+    title: source.title,
+    sourceType: source.sourceType,
+    status: getSourceStatus(source),
+    errorMessage: source.errorMessage,
+    createdAt: source.createdAt.toISOString(),
+  }));
+};
+
+export const toUploadedSources = (
+  userId: string,
+  files: UploadSourcesInput,
+): SavedSource[] => {
   return files.map((file) => ({
     title: file.originalname,
-    url: file.originalname,
+    url: `${userId}/${file.originalname}`,
     type: file.sourceType === SourceType.PDF ? "pdf" : "image",
+    uploadedById: userId,
   }));
 };
