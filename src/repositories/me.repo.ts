@@ -153,11 +153,17 @@ export const getUniversityById = async (id: string, major: string) => {
   return { ...university, courseCount };
 };
 
+const sourceTypes = {
+  pdf: SourceType.PDF,
+  html: SourceType.HTML,
+  image: SourceType.IMAGE,
+};
+
 export const saveMajorData = async (
   universityId: string,
   major: NonNullable<MajorData["major"]>,
   courses: MajorData["courses"],
-  sources: { url: string; type: "pdf" | "html" }[],
+  sources: { title?: string; url: string; type: "pdf" | "html" | "image" }[],
 ) => {
   return prisma.$transaction(async (tx) => {
     const savedMajor = await tx.major.upsert({
@@ -226,8 +232,9 @@ export const saveMajorData = async (
     await tx.courseMaterialSource.createMany({
       data: sources.map((source) => ({
         universityId,
+        title: source.title ?? null,
         url: source.url,
-        sourceType: source.type === "pdf" ? SourceType.PDF : SourceType.HTML,
+        sourceType: sourceTypes[source.type],
         lastFetchedAt: now,
         lastProcessedAt: now,
       })),

@@ -194,6 +194,12 @@ export interface ParsedSource {
   text: string;
 }
 
+export interface SavedSource {
+  title?: string;
+  url: string;
+  type: "pdf" | "html" | "image";
+}
+
 const parseSource = async (url: string): Promise<ParsedSource | null> => {
   try {
     const type = await detectContentType(url);
@@ -308,7 +314,7 @@ export const extractMajorDataFromFiles = async (
 export const saveMajorData = async (
   universityId: string,
   majorData: MajorData,
-  sources: ParsedSource[],
+  sources: SavedSource[],
 ): Promise<MajorDto | null> => {
   if (!majorData.major) return null;
 
