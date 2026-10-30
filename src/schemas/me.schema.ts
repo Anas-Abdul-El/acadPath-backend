@@ -61,7 +61,10 @@ export const uploadSourcesSchema = z
     (files) =>
       files.reduce((total, file) => total + file.size, 0) <=
       MAX_SOURCES_TOTAL_SIZE,
-    { error: "Files must be 150 MB or smaller in total" },
+    {
+      error: "Files must be 150 MB or smaller in total",
+      params: { status: 413 },
+    },
   );
 
 /** UploadSourcesInput is the validated files, each with its detected sourceType. */
