@@ -158,6 +158,14 @@ export const updateProfile = async (
   });
 };
 
+export const completeOnboarding = async (userId: string) => {
+  return prisma.studentProfile.update({
+    where: { userId },
+    data: { onboardingCompletedAt: new Date() },
+    select: { id: true },
+  });
+};
+
 export const getSelection = async (userId: string) => {
   return prisma.studentProfile.findUnique({
     where: { userId },
