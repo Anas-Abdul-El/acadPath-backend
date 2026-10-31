@@ -3,6 +3,7 @@ import {
   CourseCategory,
   SourceType,
   Term,
+  YearOfStudy,
 } from "../generated/prisma/enums.js";
 
 const MAX_SOURCE_FILE_SIZE = 25 * 1024 * 1024;
@@ -107,6 +108,23 @@ export const selectUniversitySchema = z.object({
 
 /** SelectUniversityBody is the validated body: { name, country, city, major }. */
 export type SelectUniversityBody = z.infer<typeof selectUniversitySchema>;
+
+/**
+ * updateProfileSchema validates the PATCH /me/profile request body.
+ * At least one field is required and unknown fields are rejected.
+ */
+export const updateProfileSchema = z
+  .strictObject({
+    yearOfStudy: z
+      .enum(YearOfStudy, { error: "Select a valid year of study" })
+      .exactOptional(),
+  })
+  .refine((body) => Object.keys(body).length > 0, {
+    error: "Send at least one field to update",
+  });
+
+/** UpdateProfileBody is the validated body: { yearOfStudy? }. */
+export type UpdateProfileBody = z.infer<typeof updateProfileSchema>;
 
 /**
  * majorDataSchema validates the course extraction AI's reply.
