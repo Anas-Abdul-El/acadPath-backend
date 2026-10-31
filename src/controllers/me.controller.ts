@@ -3,6 +3,7 @@ import AppErr from "../libs/appErr.js";
 import * as meService from "../services/me.service.js";
 import type {
   SelectUniversityBody,
+  UpdateProfileBody,
   UploadSourcesInput,
 } from "../schemas/me.schema.js";
 import type {
@@ -95,6 +96,18 @@ export const uploadSources = async (
   const updated = await meService.getUniversityById(university.id, saved.name);
 
   res.send({ data: meService.toUniversityData(updated, saved) });
+};
+
+export const updateProfile = async (
+  req: Request<unknown, unknown, UpdateProfileBody>,
+  res: Response<MeOutput>,
+) => {
+  const authUser = res.locals.user;
+  if (!authUser) throw new AppErr("Missing or malformed access token", 401);
+
+  const data = await meService.updateProfile(authUser.id, req.body);
+
+  res.send({ data });
 };
 
 export const getUniversitySources = async (
