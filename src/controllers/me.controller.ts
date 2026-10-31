@@ -4,11 +4,13 @@ import * as meService from "../services/me.service.js";
 import type {
   SelectUniversityBody,
   UpdateProfileBody,
+  UploadDocumentsBody,
   UploadSourcesInput,
 } from "../schemas/me.schema.js";
 import type {
   MeOutput,
   SelectUniversityOutput,
+  StudentDocumentsOutput,
   UniversityOutput,
   UniversitySourcesOutput,
 } from "../types/me.dto.js";
@@ -108,6 +110,27 @@ export const updateProfile = async (
   const data = await meService.updateProfile(authUser.id, req.body);
 
   res.send({ data });
+};
+
+export const uploadDocuments = async (
+  req: Request<unknown, unknown, UploadDocumentsBody>,
+  res: Response<StudentDocumentsOutput>,
+) => {
+  const authUser = res.locals.user;
+  if (!authUser) throw new AppErr("Missing or malformed access token", 401);
+
+  const files: UploadSourcesInput = res.locals.files;
+  const { id, university, major } = await meService.getSelection(authUser.id);
+
+  const transcript = await meService.extractTranscriptFromFiles(
+    { name: university.name, major: major.name },
+    files,
+  );
+  const records = await meService.matchRecords(major, transcript.records);
+  const stored = await meService.uploadDocuments(id, files);
+  const data = await meService.saveDocuments(id, req.body.type, stored, records);
+
+  res.status(201).send({ data });
 };
 
 export const getUniversitySources = async (
