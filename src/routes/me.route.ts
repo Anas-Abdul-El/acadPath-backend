@@ -9,6 +9,7 @@ import {
 import {
   selectUniversitySchema,
   updateProfileSchema,
+  uploadDocumentsBodySchema,
   uploadSourcesSchema,
 } from "../schemas/me.schema.js";
 import catchAsync from "../utils/catchAsync";
@@ -40,6 +41,16 @@ meRouter.post(
   upload.array("files", 20),
   validateFiles(uploadSourcesSchema),
   catchAsync(meController.uploadSources),
+);
+
+meRouter.post(
+  "/documents",
+  authenticate,
+  authorize("STUDENT"),
+  upload.array("files", 20),
+  validateFiles(uploadSourcesSchema),
+  validateBody(uploadDocumentsBodySchema),
+  catchAsync(meController.uploadDocuments),
 );
 
 meRouter.patch(
