@@ -16,6 +16,7 @@ import AppErr from "../libs/appErr.js";
 import { aiMessage, geminiMessage } from "../libs/model.js";
 import {
   COURSE_EXTRACTION_PROMPT,
+  IMAGE_EXTRACTION_PROMPT,
   SOURCE_DISCOVERY_PROMPT,
 } from "../libs/prompt.js";
 import detectContentType from "../utils/detectContentType.js";
@@ -292,6 +293,7 @@ const extractMajorDataFromImages = async (
   if (files.length === 0) return { major: null, courses: [] };
 
   const reply = await geminiMessage(
+    IMAGE_EXTRACTION_PROMPT,
     JSON.stringify({
       universityName: input.name.trim(),
       majorName: input.major.trim(),
