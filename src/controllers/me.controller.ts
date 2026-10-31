@@ -133,6 +133,18 @@ export const uploadDocuments = async (
   res.status(201).send({ data });
 };
 
+export const completeOnboarding = async (
+  req: Request,
+  res: Response<MeOutput>,
+) => {
+  const authUser = res.locals.user;
+  if (!authUser) throw new AppErr("Missing or malformed access token", 401);
+
+  const data = await meService.completeOnboarding(authUser.id);
+
+  res.send({ data });
+};
+
 export const getDocuments = async (
   req: Request,
   res: Response<StudentDocumentsOutput>,
