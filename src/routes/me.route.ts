@@ -17,7 +17,7 @@ import meController from "../controllers";
 
 const meRouter: Router = Router();
 
-meRouter.get("/", authenticate, catchAsync(meController.getMe));
+meRouter.get("/", authenticate, catchAsync(meController.getMeData));
 
 meRouter.put(
   "/university",
@@ -31,7 +31,7 @@ meRouter.get(
   "/university/sources",
   authenticate,
   authorize("STUDENT"),
-  catchAsync(meController.getUniversitySources),
+  catchAsync(meController.getStudentUniversitySources),
 );
 
 meRouter.post(
@@ -47,7 +47,7 @@ meRouter.get(
   "/documents",
   authenticate,
   authorize("STUDENT"),
-  catchAsync(meController.getDocuments),
+  catchAsync(meController.listDocuments),
 );
 
 meRouter.post(

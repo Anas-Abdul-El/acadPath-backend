@@ -15,11 +15,11 @@ import type {
   UniversitySourcesOutput,
 } from "../types/me.dto.js";
 
-export const getMe = async (req: Request, res: Response<MeOutput>) => {
+export const getMeData = async (req: Request, res: Response<MeOutput>) => {
   const authUser = res.locals.user;
   if (!authUser) throw new AppErr("Missing or malformed access token", 401);
 
-  const data = await meService.getMe(authUser.id);
+  const data = await meService.getMeData(authUser.id);
 
   res.send({ data });
 };
@@ -33,10 +33,10 @@ export const selectUniversity = async (
 
   const found = await meService.findUniversity(req.body);
   const university =
-    found.university ?? (await meService.createUniversity(req.body));
+    found.university ?? (await meService.findOrCreateUniversity(req.body));
 
   if (found.major) {
-    const replaced = await meService.saveSelection(
+    const replaced = await meService.saveUniversitySelection(
       authUser.id,
       university.id,
       found.major.id,
@@ -59,7 +59,7 @@ export const selectUniversity = async (
     majorData,
     parsedSources,
   );
-  const replaced = await meService.saveSelection(
+  const replaced = await meService.saveUniversitySelection(
     authUser.id,
     university.id,
     major.id,
@@ -126,7 +126,10 @@ export const uploadDocuments = async (
     { name: university.name, major: major.name },
     files,
   );
-  const records = await meService.matchRecords(major, transcript.records);
+  const records = await meService.matchRecordsToMajorCourses(
+    major,
+    transcript.records,
+  );
   const stored = await meService.uploadDocuments(id, files);
   const data = await meService.saveDocuments(id, req.body.type, stored, records);
 
@@ -145,26 +148,26 @@ export const completeOnboarding = async (
   res.send({ data });
 };
 
-export const getDocuments = async (
+export const listDocuments = async (
   req: Request,
   res: Response<StudentDocumentsOutput>,
 ) => {
   const authUser = res.locals.user;
   if (!authUser) throw new AppErr("Missing or malformed access token", 401);
 
-  const data = await meService.getDocuments(authUser.id);
+  const data = await meService.listDocuments(authUser.id);
 
   res.send({ data });
 };
 
-export const getUniversitySources = async (
+export const getStudentUniversitySources = async (
   req: Request,
   res: Response<UniversitySourcesOutput>,
 ) => {
   const authUser = res.locals.user;
   if (!authUser) throw new AppErr("Missing or malformed access token", 401);
 
-  const data = await meService.getUniversitySources(authUser.id);
+  const data = await meService.getStudentUniversitySources(authUser.id);
 
   res.send({ data });
 };

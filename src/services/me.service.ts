@@ -62,8 +62,8 @@ const getCatalogStatus = (sources: SourceState[]): CatalogStatus => {
   return "UNAVAILABLE";
 };
 
-export const getMe = async (userId: string): Promise<MeData> => {
-  const userInfo = await meRepo.getUserInfo(userId);
+export const getMeData = async (userId: string): Promise<MeData> => {
+  const userInfo = await meRepo.getUserWithProfile(userId);
   if (!userInfo) throw new AppErr("User not found", 401);
 
   const { studentProfile, ...user } = userInfo;
@@ -135,10 +135,11 @@ export const toUniversityData = (
   };
 };
 
-const clean = (value: string): string => value.trim().replace(/\s+/g, " ");
+const collapseWhitespace = (value: string): string =>
+  value.trim().replace(/\s+/g, " ");
 
-const normalize = (value: string): string =>
-  clean(value)
+const normalizeForComparison = (value: string): string =>
+  collapseWhitespace(value)
     .normalize("NFD")
     .replace(/\p{M}/gu, "")
     .toLowerCase()
@@ -149,16 +150,16 @@ export const findUniversity = async (input: {
   country: string;
   major: string;
 }): Promise<{ university: UniversityInfo | null; major: MajorDto | null }> => {
-  const name = normalize(input.name);
-  const country = normalize(input.country);
+  const name = normalizeForComparison(input.name);
+  const country = normalizeForComparison(input.country);
 
   const universities = await meRepo.listUniversities();
   const match = universities.find(
     (university) =>
-      normalize(university.country) === country &&
-      (normalize(university.name) === name ||
+      normalizeForComparison(university.country) === country &&
+      (normalizeForComparison(university.name) === name ||
         (university.shortName !== null &&
-          normalize(university.shortName) === name)),
+          normalizeForComparison(university.shortName) === name)),
   );
   if (!match) return { university: null, major: null };
 
@@ -169,16 +170,16 @@ export const findUniversity = async (input: {
   return { university, major: university.majors[0] ?? null };
 };
 
-export const createUniversity = async (input: {
+export const findOrCreateUniversity = async (input: {
   name: string;
   country: string;
   city: string;
   major: string;
 }): Promise<UniversityInfo> => {
-  return meRepo.createUniversity({
-    name: clean(input.name),
-    country: clean(input.country),
-    city: clean(input.city),
+  return meRepo.findOrCreateUniversity({
+    name: collapseWhitespace(input.name),
+    country: collapseWhitespace(input.country),
+    city: collapseWhitespace(input.city),
     major: input.major.trim(),
   });
 };
@@ -364,13 +365,13 @@ export const getUniversityById = async (
   return meRepo.getUniversityById(id, major);
 };
 
-export const saveSelection = async (
+export const saveUniversitySelection = async (
   userId: string,
   universityId: string,
   majorId: string | null,
 ): Promise<boolean> => {
   const previous = await meRepo.getSelection(userId);
-  await meRepo.saveSelection(userId, universityId, majorId);
+  await meRepo.saveUniversitySelection(userId, universityId, majorId);
 
   const previousId = previous?.university?.id ?? null;
   return previousId !== null && previousId !== universityId;
@@ -393,11 +394,11 @@ export const updateProfile = async (
   data: UpdateProfileBody,
 ): Promise<MeData> => {
   await meRepo.updateProfile(userId, data);
-  return getMe(userId);
+  return getMeData(userId);
 };
 
 export const completeOnboarding = async (userId: string): Promise<MeData> => {
-  const me = await getMe(userId);
+  const me = await getMeData(userId);
   const { profile, onboarding } = me;
   if (!profile || !onboarding) throw new AppErr("Only students onboard", 403);
   if (onboarding.completed) return me;
@@ -412,13 +413,13 @@ export const completeOnboarding = async (userId: string): Promise<MeData> => {
     throw new AppErr("Upload your transcript first", 422);
 
   await meRepo.completeOnboarding(userId);
-  return getMe(userId);
+  return getMeData(userId);
 };
 
-export const getUniversitySources = async (
+export const getStudentUniversitySources = async (
   userId: string,
 ): Promise<UniversitySourceDto[]> => {
-  const profile = await meRepo.getUniversitySources(userId);
+  const profile = await meRepo.getStudentUniversitySources(userId);
   if (!profile?.university)
     throw new AppErr("Select your university first", 422);
 
@@ -486,7 +487,7 @@ export const extractTranscriptFromFiles = async (
 const normalizeCode = (code: string): string =>
   code.toUpperCase().replace(/\s+/g, "");
 
-export const matchRecords = async (
+export const matchRecordsToMajorCourses = async (
   major: { id: string; name: string },
   records: TranscriptData["records"],
 ): Promise<MatchedRecord[]> => {
@@ -574,7 +575,7 @@ export const saveDocuments = async (
   return saved.map(toDocumentDto);
 };
 
-export const getDocuments = async (
+export const listDocuments = async (
   userId: string,
 ): Promise<StudentDocumentDto[]> => {
   const documents = await meRepo.listDocuments(userId);

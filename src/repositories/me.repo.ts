@@ -9,7 +9,7 @@ import {
 import { prisma } from "../libs/prisma.js";
 import type { MajorData, UpdateProfileBody } from "../schemas/me.schema.js";
 
-export const getUserInfo = async (id: string) => {
+export const getUserWithProfile = async (id: string) => {
   return prisma.user.findUnique({
     where: { id },
     select: {
@@ -99,7 +99,7 @@ export const listUniversities = async () => {
   });
 };
 
-export const createUniversity = async ({
+export const findOrCreateUniversity = async ({
   name,
   country,
   city,
@@ -133,7 +133,7 @@ export const getUniversityById = async (id: string, major: string) => {
   return { ...university, courseCount };
 };
 
-export const saveSelection = async (
+export const saveUniversitySelection = async (
   userId: string,
   universityId: string,
   majorId: string | null,
@@ -234,7 +234,7 @@ export const saveDocuments = async (
   });
 };
 
-export const getUniversitySources = async (userId: string) => {
+export const getStudentUniversitySources = async (userId: string) => {
   return prisma.studentProfile.findUnique({
     where: { userId },
     select: {
