@@ -176,6 +176,26 @@ export const listMajorCourses = async (majorId: string) => {
   });
 };
 
+const documentSelect = {
+  id: true,
+  type: true,
+  fileName: true,
+  mimeType: true,
+  fileSize: true,
+  status: true,
+  errorMessage: true,
+  processedAt: true,
+  createdAt: true,
+} as const satisfies Prisma.StudentDocumentSelect;
+
+export const listDocuments = async (userId: string) => {
+  return prisma.studentDocument.findMany({
+    where: { student: { userId } },
+    select: documentSelect,
+    orderBy: { createdAt: "desc" },
+  });
+};
+
 export const saveDocuments = async (
   studentId: string,
   documents: {
@@ -201,17 +221,7 @@ export const saveDocuments = async (
         status: ProcessingStatus.COMPLETED,
         processedAt: now,
       })),
-      select: {
-        id: true,
-        type: true,
-        fileName: true,
-        mimeType: true,
-        fileSize: true,
-        status: true,
-        errorMessage: true,
-        processedAt: true,
-        createdAt: true,
-      },
+      select: documentSelect,
     });
   });
 };
