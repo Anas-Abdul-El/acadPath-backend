@@ -2,6 +2,7 @@ import {
   CourseRelationType,
   CourseSource,
   Prisma,
+  ProcessingStatus,
   SourceType,
   StudentDocumentType,
 } from "../generated/prisma/client.js";
@@ -161,9 +162,57 @@ export const getSelection = async (userId: string) => {
   return prisma.studentProfile.findUnique({
     where: { userId },
     select: {
+      id: true,
       university: { select: { id: true, name: true } },
       major: { select: { id: true, name: true } },
     },
+  });
+};
+
+export const listMajorCourses = async (majorId: string) => {
+  return prisma.course.findMany({
+    where: { majorId },
+    select: { id: true, code: true },
+  });
+};
+
+export const saveDocuments = async (
+  studentId: string,
+  documents: {
+    type: StudentDocumentType;
+    fileName: string;
+    fileUrl: string;
+    mimeType: string;
+    fileSize: number;
+  }[],
+  records: Omit<Prisma.AcademicRecordCreateManyInput, "studentId">[],
+) => {
+  return prisma.$transaction(async (tx) => {
+    await tx.academicRecord.deleteMany({ where: { studentId } });
+    await tx.academicRecord.createMany({
+      data: records.map((record) => ({ ...record, studentId })),
+    });
+
+    const now = new Date();
+    return tx.studentDocument.createManyAndReturn({
+      data: documents.map((document) => ({
+        ...document,
+        studentId,
+        status: ProcessingStatus.COMPLETED,
+        processedAt: now,
+      })),
+      select: {
+        id: true,
+        type: true,
+        fileName: true,
+        mimeType: true,
+        fileSize: true,
+        status: true,
+        errorMessage: true,
+        processedAt: true,
+        createdAt: true,
+      },
+    });
   });
 };
 
