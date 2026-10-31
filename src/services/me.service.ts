@@ -9,6 +9,7 @@ import {
   majorDataSchema,
   type MajorData,
   type SelectUniversityBody,
+  type UpdateProfileBody,
   type UploadSourcesInput,
 } from "../schemas/me.schema.js";
 import AppErr from "../libs/appErr.js";
@@ -371,6 +372,14 @@ export const getSelection = async (userId: string) => {
     throw new AppErr("Select your university first", 422);
 
   return { university: profile.university, major: profile.major };
+};
+
+export const updateProfile = async (
+  userId: string,
+  data: UpdateProfileBody,
+): Promise<MeData> => {
+  await meRepo.updateProfile(userId, data);
+  return getMe(userId);
 };
 
 export const getUniversitySources = async (
