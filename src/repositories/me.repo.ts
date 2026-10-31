@@ -6,7 +6,7 @@ import {
   StudentDocumentType,
 } from "../generated/prisma/client.js";
 import { prisma } from "../libs/prisma.js";
-import type { MajorData } from "../schemas/me.schema.js";
+import type { MajorData, UpdateProfileBody } from "../schemas/me.schema.js";
 
 export const getUserInfo = async (id: string) => {
   return prisma.user.findUnique({
@@ -141,6 +141,18 @@ export const saveSelection = async (
     where: { userId },
     create: { userId, universityId, majorId },
     update: { universityId, majorId },
+    select: { id: true },
+  });
+};
+
+export const updateProfile = async (
+  userId: string,
+  data: UpdateProfileBody,
+) => {
+  return prisma.studentProfile.upsert({
+    where: { userId },
+    create: { userId, ...data },
+    update: data,
     select: { id: true },
   });
 };
