@@ -43,6 +43,13 @@ meRouter.post(
   catchAsync(meController.uploadSources),
 );
 
+meRouter.get(
+  "/documents",
+  authenticate,
+  authorize("STUDENT"),
+  catchAsync(meController.getDocuments),
+);
+
 meRouter.post(
   "/documents",
   authenticate,
