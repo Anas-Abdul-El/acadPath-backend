@@ -2,6 +2,7 @@ import type {
   DegreeType,
   ProcessingStatus,
   SourceType,
+  StudentDocumentType,
   UserRole,
   YearOfStudy,
 } from "../generated/prisma/enums.js";
@@ -94,4 +95,20 @@ export interface UniversitySourceDto {
 
 export interface UniversitySourcesOutput {
   data: UniversitySourceDto[];
+}
+
+export interface StudentDocumentDto {
+  id: string;
+  type: StudentDocumentType;
+  fileName: string;
+  mimeType: string;
+  fileSize: number;
+  status: ProcessingStatus;
+  errorMessage: string | null;
+  processedAt: string | null;
+  createdAt: string;
+}
+
+export interface StudentDocumentsOutput {
+  data: StudentDocumentDto[];
 }
