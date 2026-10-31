@@ -1,7 +1,10 @@
 import z from "zod";
 import {
+  AcademicRecordStatus,
   CourseCategory,
+  LetterGrade,
   SourceType,
+  StudentDocumentType,
   Term,
   YearOfStudy,
 } from "../generated/prisma/enums.js";
@@ -153,3 +156,32 @@ export const majorDataSchema = z.object({
 
 /** MajorData is the validated AI reply: { major, courses }. */
 export type MajorData = z.infer<typeof majorDataSchema>;
+
+/**
+ * uploadDocumentsBodySchema validates the text fields of POST /me/documents.
+ * The files themselves go through uploadSourcesSchema.
+ */
+export const uploadDocumentsBodySchema = z.object({
+  type: z
+    .enum(StudentDocumentType, { error: "Select a valid document type" })
+    .default(StudentDocumentType.TRANSCRIPT),
+});
+
+/** UploadDocumentsBody is the validated body: { type }. */
+export type UploadDocumentsBody = z.infer<typeof uploadDocumentsBodySchema>;
+
+/** transcriptDataSchema validates the transcript extraction AI's reply. */
+export const transcriptDataSchema = z.object({
+  records: z.array(
+    z.object({
+      code: z.string().min(1),
+      status: z.enum(AcademicRecordStatus),
+      grade: z.enum(LetterGrade).nullable(),
+      term: z.enum(Term),
+      year: z.number().int().min(1950).max(2100),
+    }),
+  ),
+});
+
+/** TranscriptData is the validated AI reply: { records }. */
+export type TranscriptData = z.infer<typeof transcriptDataSchema>;
