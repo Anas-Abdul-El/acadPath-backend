@@ -8,6 +8,7 @@ import {
 } from "../middlewares";
 import {
   selectUniversitySchema,
+  updateProfileSchema,
   uploadSourcesSchema,
 } from "../schemas/me.schema.js";
 import catchAsync from "../utils/catchAsync";
@@ -39,6 +40,14 @@ meRouter.post(
   upload.array("files", 20),
   validateFiles(uploadSourcesSchema),
   catchAsync(meController.uploadSources),
+);
+
+meRouter.patch(
+  "/profile",
+  authenticate,
+  authorize("STUDENT"),
+  validateBody(updateProfileSchema),
+  catchAsync(meController.updateProfile),
 );
 
 export default meRouter;
