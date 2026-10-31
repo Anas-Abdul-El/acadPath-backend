@@ -526,6 +526,14 @@ export const uploadDocuments = async (
   );
 };
 
+const toDocumentDto = (
+  document: Awaited<ReturnType<typeof meRepo.listDocuments>>[number],
+): StudentDocumentDto => ({
+  ...document,
+  processedAt: document.processedAt?.toISOString() ?? null,
+  createdAt: document.createdAt.toISOString(),
+});
+
 export const saveDocuments = async (
   studentId: string,
   type: StudentDocumentType,
@@ -544,9 +552,12 @@ export const saveDocuments = async (
     records,
   );
 
-  return saved.map((document) => ({
-    ...document,
-    processedAt: document.processedAt?.toISOString() ?? null,
-    createdAt: document.createdAt.toISOString(),
-  }));
+  return saved.map(toDocumentDto);
+};
+
+export const getDocuments = async (
+  userId: string,
+): Promise<StudentDocumentDto[]> => {
+  const documents = await meRepo.listDocuments(userId);
+  return documents.map(toDocumentDto);
 };
