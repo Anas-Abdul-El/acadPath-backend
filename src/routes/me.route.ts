@@ -68,4 +68,11 @@ meRouter.patch(
   catchAsync(meController.updateProfile),
 );
 
+meRouter.post(
+  "/onboarding/complete",
+  authenticate,
+  authorize("STUDENT"),
+  catchAsync(meController.completeOnboarding),
+);
+
 export default meRouter;
