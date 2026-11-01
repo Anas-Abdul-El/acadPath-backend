@@ -1,5 +1,6 @@
 import { Prisma } from "../generated/prisma/client.js";
 import { prisma } from "../libs/prisma.js";
+import type { AcademicRecordsQuery } from "../schemas/app.schema.js";
 
 const courseSummarySelect = {
   id: true,
@@ -30,9 +31,17 @@ export const getSummaryProfile = async (userId: string) => {
   });
 };
 
-export const listAcademicRecords = async (userId: string) => {
+export const listAcademicRecords = async (
+  userId: string,
+  filters: AcademicRecordsQuery = {},
+) => {
   return prisma.academicRecord.findMany({
-    where: { student: { userId } },
+    where: {
+      student: { userId },
+      ...(filters.status && { status: filters.status }),
+      ...(filters.term && { term: filters.term }),
+      ...(filters.year && { year: filters.year }),
+    },
     select: {
       id: true,
       status: true,
@@ -42,7 +51,7 @@ export const listAcademicRecords = async (userId: string) => {
       year: true,
       course: { select: courseSummarySelect },
     },
-    orderBy: { year: "asc" },
+    orderBy: [{ year: "asc" }, { course: { code: "asc" } }],
   });
 };
 
