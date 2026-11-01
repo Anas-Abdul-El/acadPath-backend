@@ -1,16 +1,21 @@
 import {
   AcademicRecordStatus,
   CourseCategory,
+  CourseRelationType,
   type LetterGrade,
   PlannedCourseStatus,
   type Term,
 } from "../generated/prisma/client.js";
 import AppErr from "../libs/appErr.js";
 import * as appRepo from "../repositories/app.repo.js";
-import type { AcademicRecordsQuery } from "../schemas/app.schema.js";
+import type {
+  AcademicRecordsQuery,
+  StudentCoursesQuery,
+} from "../schemas/app.schema.js";
 import type {
   AcademicRecordDto,
   AcademicSummaryDto,
+  StudentCourseDto,
   TermDto,
 } from "../types/app.dto.js";
 
@@ -190,4 +195,105 @@ export const listAcademicRecords = async (
 ): Promise<AcademicRecordDto[]> => {
   const records = await appRepo.listAcademicRecords(userId, filters);
   return records.sort((a, b) => termKey(a) - termKey(b));
+};
+
+export const listCourses = async (
+  userId: string,
+  filters: StudentCoursesQuery,
+): Promise<StudentCourseDto[]> => {
+  const profile = await appRepo.getStudentMajorId(userId);
+  if (!profile?.majorId) throw new AppErr("Select your major first", 422);
+
+  const [courses, records, plan] = await Promise.all([
+    appRepo.listMajorCoursesWithRequisites(profile.majorId, filters),
+    appRepo.listAcademicRecords(userId),
+    appRepo.getLatestStudyPlan(userId),
+  ]);
+
+  const recordsByCourse = new Map<string, AcademicRecord[]>();
+  for (const record of [...records].sort((a, b) => termKey(b) - termKey(a))) {
+    const courseRecords = recordsByCourse.get(record.course.id) ?? [];
+    courseRecords.push(record);
+    recordsByCourse.set(record.course.id, courseRecords);
+  }
+
+  const plannedTerms = new Map<string, TermDto>();
+  const semesters = [...(plan?.semesters ?? [])].sort(
+    (a, b) => termKey(a) - termKey(b),
+  );
+  for (const semester of semesters) {
+    for (const planned of semester.courses) {
+      if (planned.status !== PlannedCourseStatus.PLANNED) continue;
+      if (plannedTerms.has(planned.course.id)) continue;
+      plannedTerms.set(planned.course.id, {
+        term: semester.term,
+        year: semester.year,
+      });
+    }
+  }
+
+  const findRecord = (courseId: string, status: AcademicRecordStatus) =>
+    recordsByCourse.get(courseId)?.find((r) => r.status === status);
+
+  const getStudentStatus = (
+    courseId: string,
+  ): Pick<StudentCourseDto, "status" | "statusDetail"> => {
+    for (const status of [
+      AcademicRecordStatus.COMPLETED,
+      AcademicRecordStatus.IN_PROGRESS,
+      AcademicRecordStatus.FAILED,
+    ]) {
+      const record = findRecord(courseId, status);
+      if (record) {
+        return {
+          status,
+          statusDetail: {
+            grade: record.grade,
+            term: record.term,
+            year: record.year,
+          },
+        };
+      }
+    }
+
+    const planned = plannedTerms.get(courseId);
+    if (planned) {
+      return { status: "PLANNED", statusDetail: { grade: null, ...planned } };
+    }
+
+    return {
+      status: "NOT_TAKEN",
+      statusDetail: { grade: null, term: null, year: null },
+    };
+  };
+
+  const isCompleted = (courseId: string) =>
+    !!findRecord(courseId, AcademicRecordStatus.COMPLETED);
+
+  const isInProgress = (courseId: string) =>
+    !!findRecord(courseId, AcademicRecordStatus.IN_PROGRESS);
+
+  const result: StudentCourseDto[] = courses.map(
+    ({ requisites, ...course }) => ({
+      ...course,
+      prerequisites: requisites
+        .filter((r) => r.relationType === CourseRelationType.PREREQUISITE)
+        .map(({ requiredCourse }) => ({
+          ...requiredCourse,
+          met: isCompleted(requiredCourse.id),
+        })),
+      corequisites: requisites
+        .filter((r) => r.relationType === CourseRelationType.COREQUISITE)
+        .map(({ requiredCourse }) => ({
+          ...requiredCourse,
+          met:
+            isCompleted(requiredCourse.id) || isInProgress(requiredCourse.id),
+        })),
+      ...getStudentStatus(course.id),
+    }),
+  );
+
+  return filters.status
+    ? result.filter((course) => course.status === filters.status)
+    : result;
 };
