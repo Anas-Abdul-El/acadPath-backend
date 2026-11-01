@@ -97,3 +97,38 @@ export interface AcademicRecordDto extends TermDto {
 export interface AcademicRecordsOutput {
   data: AcademicRecordDto[];
 }
+
+export type StudentCourseStatus =
+  | "COMPLETED"
+  | "FAILED"
+  | "IN_PROGRESS"
+  | "PLANNED"
+  | "NOT_TAKEN";
+
+export interface CourseRefDto {
+  id: string;
+  code: string;
+  name: string;
+}
+
+export interface RequisiteDto extends CourseRefDto {
+  met: boolean;
+}
+
+export interface StudentCourseDto extends CourseSummaryDto {
+  majorId: string;
+  description: string | null;
+  offeredTerms: Term[];
+  prerequisites: RequisiteDto[];
+  corequisites: RequisiteDto[];
+  status: StudentCourseStatus;
+  statusDetail: {
+    grade: LetterGrade | null;
+    term: Term | null;
+    year: number | null;
+  };
+}
+
+export interface StudentCoursesOutput {
+  data: StudentCourseDto[];
+}
