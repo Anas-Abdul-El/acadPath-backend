@@ -85,3 +85,15 @@ export interface AcademicSummaryDto {
 export interface AcademicSummaryOutput {
   data: AcademicSummaryDto;
 }
+
+export interface AcademicRecordDto extends TermDto {
+  id: string;
+  course: CourseSummaryDto;
+  status: AcademicRecordStatus;
+  grade: LetterGrade | null;
+  expectedGrade: LetterGrade | null;
+}
+
+export interface AcademicRecordsOutput {
+  data: AcademicRecordDto[];
+}
