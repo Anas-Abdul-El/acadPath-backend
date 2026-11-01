@@ -5,6 +5,7 @@ import {
   type LetterGrade,
   PlannedCourseStatus,
   type Term,
+  UserRole,
 } from "../generated/prisma/client.js";
 import AppErr from "../libs/appErr.js";
 import * as appRepo from "../repositories/app.repo.js";
@@ -15,13 +16,17 @@ import type {
 import type {
   AcademicRecordDto,
   AcademicSummaryDto,
+  CourseDetailsDto,
   StudentCourseDto,
+  StudentStatusDto,
   TermDto,
 } from "../types/app.dto.js";
 
 type AcademicRecord = Awaited<
   ReturnType<typeof appRepo.listAcademicRecords>
 >[number];
+
+type LatestStudyPlan = Awaited<ReturnType<typeof appRepo.getLatestStudyPlan>>;
 
 const gradePoints: Record<LetterGrade, number> = {
   A: 4.0,
@@ -197,19 +202,10 @@ export const listAcademicRecords = async (
   return records.sort((a, b) => termKey(a) - termKey(b));
 };
 
-export const listCourses = async (
-  userId: string,
-  filters: StudentCoursesQuery,
-): Promise<StudentCourseDto[]> => {
-  const profile = await appRepo.getStudentMajorId(userId);
-  if (!profile?.majorId) throw new AppErr("Select your major first", 422);
-
-  const [courses, records, plan] = await Promise.all([
-    appRepo.listMajorCoursesWithRequisites(profile.majorId, filters),
-    appRepo.listAcademicRecords(userId),
-    appRepo.getLatestStudyPlan(userId),
-  ]);
-
+const buildStudentProgress = (
+  records: AcademicRecord[],
+  plan: LatestStudyPlan,
+) => {
   const recordsByCourse = new Map<string, AcademicRecord[]>();
   for (const record of [...records].sort((a, b) => termKey(b) - termKey(a))) {
     const courseRecords = recordsByCourse.get(record.course.id) ?? [];
@@ -235,9 +231,7 @@ export const listCourses = async (
   const findRecord = (courseId: string, status: AcademicRecordStatus) =>
     recordsByCourse.get(courseId)?.find((r) => r.status === status);
 
-  const getStudentStatus = (
-    courseId: string,
-  ): Pick<StudentCourseDto, "status" | "statusDetail"> => {
+  const getStudentStatus = (courseId: string): StudentStatusDto => {
     for (const status of [
       AcademicRecordStatus.COMPLETED,
       AcademicRecordStatus.IN_PROGRESS,
@@ -273,6 +267,26 @@ export const listCourses = async (
   const isInProgress = (courseId: string) =>
     !!findRecord(courseId, AcademicRecordStatus.IN_PROGRESS);
 
+  return { getStudentStatus, isCompleted, isInProgress };
+};
+
+export const listCourses = async (
+  userId: string,
+  filters: StudentCoursesQuery,
+): Promise<StudentCourseDto[]> => {
+  const profile = await appRepo.getStudentMajorId(userId);
+  if (!profile?.majorId) throw new AppErr("Select your major first", 422);
+
+  const [courses, records, plan] = await Promise.all([
+    appRepo.listMajorCoursesWithRequisites(profile.majorId, filters),
+    appRepo.listAcademicRecords(userId),
+    appRepo.getLatestStudyPlan(userId),
+  ]);
+  const { getStudentStatus, isCompleted, isInProgress } = buildStudentProgress(
+    records,
+    plan,
+  );
+
   const result: StudentCourseDto[] = courses.map(
     ({ requisites, ...course }) => ({
       ...course,
@@ -296,4 +310,37 @@ export const listCourses = async (
   return filters.status
     ? result.filter((course) => course.status === filters.status)
     : result;
+};
+
+export const getCourseDetails = async (
+  courseId: string,
+  userId: string,
+  role: UserRole,
+): Promise<CourseDetailsDto> => {
+  const course = await appRepo.getCourseDetails(courseId);
+  if (!course) throw new AppErr("Course not found", 404);
+
+  let studentStatus: StudentStatusDto | null = null;
+  if (role === UserRole.STUDENT) {
+    const [records, plan] = await Promise.all([
+      appRepo.listAcademicRecords(userId),
+      appRepo.getLatestStudyPlan(userId),
+    ]);
+    studentStatus = buildStudentProgress(records, plan).getStudentStatus(
+      course.id,
+    );
+  }
+
+  const { requisites, requiredFor, ...rest } = course;
+  return {
+    ...rest,
+    prerequisites: requisites
+      .filter((r) => r.relationType === CourseRelationType.PREREQUISITE)
+      .map((r) => r.requiredCourse),
+    corequisites: requisites
+      .filter((r) => r.relationType === CourseRelationType.COREQUISITE)
+      .map((r) => r.requiredCourse),
+    requiredFor: requiredFor.map((r) => r.course),
+    studentStatus,
+  };
 };
