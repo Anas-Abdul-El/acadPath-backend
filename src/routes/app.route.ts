@@ -1,6 +1,9 @@
 import { Router } from "express";
 import { authenticate, authorize, validateQuery } from "../middlewares";
-import { academicRecordsQuerySchema } from "../schemas/app.schema.js";
+import {
+  academicRecordsQuerySchema,
+  studentCoursesQuerySchema,
+} from "../schemas/app.schema.js";
 import catchAsync from "../utils/catchAsync";
 import appController from "../controllers";
 
@@ -19,6 +22,14 @@ appRouter.get(
   authorize("STUDENT"),
   validateQuery(academicRecordsQuerySchema),
   catchAsync(appController.listAcademicRecords),
+);
+
+appRouter.get(
+  "/courses",
+  authenticate,
+  authorize("STUDENT"),
+  validateQuery(studentCoursesQuerySchema),
+  catchAsync(appController.listCourses),
 );
 
 export default appRouter;
