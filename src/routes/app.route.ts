@@ -2,12 +2,14 @@ import { Router } from "express";
 import {
   authenticate,
   authorize,
+  validateBody,
   validateParams,
   validateQuery,
 } from "../middlewares";
 import {
   academicRecordsQuerySchema,
   courseParamsSchema,
+  generateStudyPlanSchema,
   studentCoursesQuerySchema,
 } from "../schemas/app.schema.js";
 import catchAsync from "../utils/catchAsync";
@@ -44,6 +46,14 @@ appRouter.get(
   authenticate,
   authorize("STUDENT"),
   catchAsync(appController.getStudyPlan),
+);
+
+appRouter.post(
+  "/study-plan/generate",
+  authenticate,
+  authorize("STUDENT"),
+  validateBody(generateStudyPlanSchema),
+  catchAsync(appController.generateStudyPlan),
 );
 
 courseRouter.get(
