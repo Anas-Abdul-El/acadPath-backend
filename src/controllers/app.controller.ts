@@ -11,6 +11,7 @@ import type {
   AcademicSummaryOutput,
   CourseDetailsOutput,
   StudentCoursesOutput,
+  StudyPlanOutput,
 } from "../types/app.dto.js";
 
 export const getAcademicSummary = async (
@@ -64,6 +65,18 @@ export const getCourseDetails = async (
     authUser.id,
     authUser.role,
   );
+
+  res.send({ data });
+};
+
+export const getStudyPlan = async (
+  req: Request,
+  res: Response<StudyPlanOutput>,
+) => {
+  const authUser = res.locals.user;
+  if (!authUser) throw new AppErr("Missing or malformed access token", 401);
+
+  const data = await appService.getStudyPlan(authUser.id);
 
   res.send({ data });
 };
