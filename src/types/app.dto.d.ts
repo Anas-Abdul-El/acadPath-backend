@@ -2,6 +2,7 @@ import type {
   AcademicRecordStatus,
   CourseCategory,
   LetterGrade,
+  PlannedCourseStatus,
   ResourceDifficulty,
   ResourcePlatform,
   Term,
@@ -169,4 +170,36 @@ export interface CourseDetailsDto extends CourseDto {
 
 export interface CourseDetailsOutput {
   data: CourseDetailsDto;
+}
+
+export interface StudyPlanCourseDto {
+  id: string;
+  status: PlannedCourseStatus;
+  course: CourseDto;
+}
+
+export interface StudyPlanSemesterDto extends TermDto {
+  id: string;
+  rationale: string | null;
+  credits: number;
+  courses: StudyPlanCourseDto[];
+}
+
+export interface StudyPlanDto {
+  id: string;
+  name: string;
+  generatedAt: Date;
+  assumptions: string[];
+  notes: string[];
+  semesters: StudyPlanSemesterDto[];
+  totals: {
+    plannedCredits: number;
+    creditsRequired: number | null;
+    meetsDegreeTotal: boolean | null;
+  };
+  expectedGraduation: TermDto | null;
+}
+
+export interface StudyPlanOutput {
+  data: StudyPlanDto | null;
 }
