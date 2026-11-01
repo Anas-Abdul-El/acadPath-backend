@@ -1,5 +1,5 @@
 import OpenAI from "openai";
-import { GoogleGenAI, type ThinkingLevel } from "@google/genai";
+import { GoogleGenAI } from "@google/genai";
 import { config } from "dotenv";
 
 config();
@@ -14,6 +14,7 @@ const client = new OpenAI({
 export const aiMessage = async (
   prompt: string,
   content: string,
+  { webSearch = true }: { webSearch?: boolean } = {},
 ): Promise<string | null> => {
   const response = await client.chat.completions.create({
     model: "nvidia/nemotron-3-ultra-550b-a55b:free",
@@ -24,15 +25,17 @@ export const aiMessage = async (
         content,
       },
     ],
-    tools: [
-      {
-        type: "openrouter:web_search",
-        parameters: {
-          engine: "exa",
-          max_results: 5,
-        },
-      } as any,
-    ],
+    ...(webSearch && {
+      tools: [
+        {
+          type: "openrouter:web_search",
+          parameters: {
+            engine: "exa",
+            max_results: 5,
+          },
+        } as any,
+      ],
+    }),
   });
 
   return response.choices[0]?.message.content ?? null;
@@ -46,7 +49,6 @@ export const geminiMessage = async (
   prompt: string,
   content: string,
   files: { buffer: Buffer; mimeType: string }[],
-  thinkingLevel?: ThinkingLevel,
 ): Promise<string | null> => {
   const response = await gemini.models.generateContent({
     model: "gemini-3.8-flash",
@@ -59,7 +61,6 @@ export const geminiMessage = async (
     config: {
       systemInstruction: prompt,
       responseMimeType: "application/json",
-      ...(thinkingLevel && { thinkingConfig: { thinkingLevel } }),
     },
   });
 

@@ -7,9 +7,8 @@ import {
   type Term,
   UserRole,
 } from "../generated/prisma/client.js";
-import { ThinkingLevel } from "@google/genai";
 import AppErr from "../libs/appErr.js";
-import { geminiMessage, parseAiJson } from "../libs/model.js";
+import { aiMessage, parseAiJson } from "../libs/model.js";
 import { STUDY_PLAN_PROMPT } from "../libs/prompt.js";
 import * as appRepo from "../repositories/app.repo.js";
 import {
@@ -568,7 +567,7 @@ export const generateStudyPlan = async (
 
   let reply: string | null;
   try {
-    reply = await geminiMessage(
+    reply = await aiMessage(
       STUDY_PLAN_PROMPT,
       JSON.stringify({
         universityName: profile.university?.name ?? null,
@@ -588,8 +587,7 @@ export const generateStudyPlan = async (
           corequisites: requisiteCodes(course, CourseRelationType.COREQUISITE),
         })),
       }),
-      [],
-      ThinkingLevel.LOW,
+      { webSearch: false },
     );
   } catch (error) {
     throw new AppErr("The AI provider failed, try again later", 502, {
