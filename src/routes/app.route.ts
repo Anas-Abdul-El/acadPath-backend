@@ -39,6 +39,13 @@ appRouter.get(
   catchAsync(appController.listCourses),
 );
 
+appRouter.get(
+  "/study-plan",
+  authenticate,
+  authorize("STUDENT"),
+  catchAsync(appController.getStudyPlan),
+);
+
 courseRouter.get(
   "/:courseId",
   authenticate,
