@@ -1,7 +1,11 @@
 import type { Request, Response } from "express";
 import AppErr from "../libs/appErr.js";
 import * as appService from "../services/app.service.js";
-import type { AcademicSummaryOutput } from "../types/app.dto.js";
+import type { AcademicRecordsQuery } from "../schemas/app.schema.js";
+import type {
+  AcademicRecordsOutput,
+  AcademicSummaryOutput,
+} from "../types/app.dto.js";
 
 export const getAcademicSummary = async (
   req: Request,
@@ -11,6 +15,19 @@ export const getAcademicSummary = async (
   if (!authUser) throw new AppErr("Missing or malformed access token", 401);
 
   const data = await appService.getAcademicSummary(authUser.id);
+
+  res.send({ data });
+};
+
+export const listAcademicRecords = async (
+  req: Request,
+  res: Response<AcademicRecordsOutput>,
+) => {
+  const authUser = res.locals.user;
+  if (!authUser) throw new AppErr("Missing or malformed access token", 401);
+
+  const query: AcademicRecordsQuery = res.locals.query;
+  const data = await appService.listAcademicRecords(authUser.id, query);
 
   res.send({ data });
 };
