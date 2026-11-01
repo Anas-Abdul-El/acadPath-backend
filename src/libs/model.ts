@@ -63,3 +63,11 @@ export const geminiMessage = async (
 
   return response.text ?? null;
 };
+
+export const parseAiJson = (reply: string | null): unknown => {
+  try {
+    return JSON.parse(reply?.replace(/^```(?:json)?|```$/g, "").trim() ?? "");
+  } catch {
+    return null;
+  }
+};

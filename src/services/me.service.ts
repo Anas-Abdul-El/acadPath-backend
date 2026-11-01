@@ -18,7 +18,7 @@ import {
   type UploadSourcesInput,
 } from "../schemas/me.schema.js";
 import AppErr from "../libs/appErr.js";
-import { aiMessage, geminiMessage } from "../libs/model.js";
+import { aiMessage, geminiMessage, parseAiJson } from "../libs/model.js";
 import { ASSETS_BUCKET, s3 } from "../libs/storage.js";
 import {
   COURSE_EXTRACTION_PROMPT,
@@ -182,14 +182,6 @@ export const findOrCreateUniversity = async (input: {
     city: collapseWhitespace(input.city),
     major: input.major.trim(),
   });
-};
-
-const parseAiJson = (reply: string | null): unknown => {
-  try {
-    return JSON.parse(reply?.replace(/^```(?:json)?|```$/g, "").trim() ?? "");
-  } catch {
-    return null;
-  }
 };
 
 const sourcesSchema = z.object({
