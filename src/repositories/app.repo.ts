@@ -1,6 +1,9 @@
 import { Prisma } from "../generated/prisma/client.js";
 import { prisma } from "../libs/prisma.js";
-import type { AcademicRecordsQuery } from "../schemas/app.schema.js";
+import type {
+  AcademicRecordsQuery,
+  StudentCoursesQuery,
+} from "../schemas/app.schema.js";
 
 const courseSummarySelect = {
   id: true,
@@ -67,7 +70,7 @@ export const getLatestStudyPlan = async (userId: string) => {
           courses: {
             select: {
               status: true,
-              course: { select: { credits: true, category: true } },
+              course: { select: { id: true, credits: true, category: true } },
             },
           },
         },
@@ -75,5 +78,45 @@ export const getLatestStudyPlan = async (userId: string) => {
       },
     },
     orderBy: { createdAt: "desc" },
+  });
+};
+
+export const getStudentMajorId = async (userId: string) => {
+  return prisma.studentProfile.findUnique({
+    where: { userId },
+    select: { majorId: true },
+  });
+};
+
+export const listMajorCoursesWithRequisites = async (
+  majorId: string,
+  filters: StudentCoursesQuery,
+) => {
+  return prisma.course.findMany({
+    where: {
+      majorId,
+      ...(filters.category && { category: filters.category }),
+      ...(filters.q && {
+        OR: [
+          { code: { contains: filters.q, mode: "insensitive" } },
+          { name: { contains: filters.q, mode: "insensitive" } },
+          { description: { contains: filters.q, mode: "insensitive" } },
+        ],
+      }),
+    },
+    select: {
+      ...courseSummarySelect,
+      majorId: true,
+      description: true,
+      offeredTerms: true,
+      requisites: {
+        select: {
+          relationType: true,
+          requiredCourse: { select: { id: true, code: true, name: true } },
+        },
+        orderBy: { requiredCourse: { code: "asc" } },
+      },
+    },
+    orderBy: { code: "asc" },
   });
 };
