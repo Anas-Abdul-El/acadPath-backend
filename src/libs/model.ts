@@ -1,5 +1,5 @@
 import OpenAI from "openai";
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, type ThinkingLevel } from "@google/genai";
 import { config } from "dotenv";
 
 config();
@@ -46,9 +46,10 @@ export const geminiMessage = async (
   prompt: string,
   content: string,
   files: { buffer: Buffer; mimeType: string }[],
+  thinkingLevel?: ThinkingLevel,
 ): Promise<string | null> => {
   const response = await gemini.models.generateContent({
-    model: "gemini-2.5-flash",
+    model: "gemini-3.8-flash",
     contents: [
       { text: content },
       ...files.map(({ buffer, mimeType }) => ({
@@ -58,6 +59,7 @@ export const geminiMessage = async (
     config: {
       systemInstruction: prompt,
       responseMimeType: "application/json",
+      ...(thinkingLevel && { thinkingConfig: { thinkingLevel } }),
     },
   });
 
