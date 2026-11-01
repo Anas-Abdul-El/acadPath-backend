@@ -7,7 +7,12 @@ import {
 } from "../generated/prisma/client.js";
 import AppErr from "../libs/appErr.js";
 import * as appRepo from "../repositories/app.repo.js";
-import type { AcademicSummaryDto, TermDto } from "../types/app.dto.js";
+import type { AcademicRecordsQuery } from "../schemas/app.schema.js";
+import type {
+  AcademicRecordDto,
+  AcademicSummaryDto,
+  TermDto,
+} from "../types/app.dto.js";
 
 type AcademicRecord = Awaited<
   ReturnType<typeof appRepo.listAcademicRecords>
@@ -177,4 +182,12 @@ export const getAcademicSummary = async (
       };
     }),
   };
+};
+
+export const listAcademicRecords = async (
+  userId: string,
+  filters: AcademicRecordsQuery,
+): Promise<AcademicRecordDto[]> => {
+  const records = await appRepo.listAcademicRecords(userId, filters);
+  return records.sort((a, b) => termKey(a) - termKey(b));
 };
