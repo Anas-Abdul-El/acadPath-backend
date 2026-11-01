@@ -1,4 +1,4 @@
-import { Prisma } from "../generated/prisma/client.js";
+import { CourseRelationType, Prisma } from "../generated/prisma/client.js";
 import { prisma } from "../libs/prisma.js";
 import type {
   AcademicRecordsQuery,
@@ -118,5 +118,52 @@ export const listMajorCoursesWithRequisites = async (
       },
     },
     orderBy: { code: "asc" },
+  });
+};
+
+const courseRefSelect = {
+  id: true,
+  code: true,
+  name: true,
+} as const satisfies Prisma.CourseSelect;
+
+export const getCourseDetails = async (courseId: string) => {
+  return prisma.course.findUnique({
+    where: { id: courseId },
+    select: {
+      ...courseSummarySelect,
+      majorId: true,
+      description: true,
+      offeredTerms: true,
+      requisites: {
+        select: {
+          relationType: true,
+          requiredCourse: { select: courseRefSelect },
+        },
+        orderBy: { requiredCourse: { code: "asc" } },
+      },
+      requiredFor: {
+        where: { relationType: CourseRelationType.PREREQUISITE },
+        select: { course: { select: courseRefSelect } },
+        orderBy: { course: { code: "asc" } },
+      },
+      resources: {
+        select: {
+          id: true,
+          title: true,
+          url: true,
+          platform: true,
+          provider: true,
+          format: true,
+          description: true,
+          duration: true,
+          difficulty: true,
+          topics: true,
+          verified: true,
+          courses: { select: courseRefSelect, orderBy: { code: "asc" } },
+        },
+        orderBy: { title: "asc" },
+      },
+    },
   });
 };
