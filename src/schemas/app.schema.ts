@@ -22,3 +22,9 @@ export const studentCoursesQuerySchema = z.object({
 });
 
 export type StudentCoursesQuery = z.infer<typeof studentCoursesQuerySchema>;
+
+export const courseParamsSchema = z.object({
+  courseId: z.uuid(),
+});
+
+export type CourseParams = z.infer<typeof courseParamsSchema>;
