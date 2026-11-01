@@ -7,6 +7,7 @@ import {
   type Term,
   UserRole,
 } from "../generated/prisma/client.js";
+import { ThinkingLevel } from "@google/genai";
 import AppErr from "../libs/appErr.js";
 import { geminiMessage, parseAiJson } from "../libs/model.js";
 import { STUDY_PLAN_PROMPT } from "../libs/prompt.js";
@@ -441,15 +442,27 @@ const calendarTerm = (date: Date): TermDto => {
 const nextSemester = ({ term, year }: TermDto): TermDto =>
   term === "FALL" ? { term: "SPRING", year: year + 1 } : { term: "FALL", year };
 
-const requisiteIds = (course: MajorCourse, type: CourseRelationType) =>
-  course.requisites
+const requisitesOf = (course: MajorCourse, type: CourseRelationType) => {
+  const corequisiteIds = new Set(
+    course.requisites
+      .filter((r) => r.relationType === CourseRelationType.COREQUISITE)
+      .map((r) => r.requiredCourse.id),
+  );
+  return course.requisites
     .filter((r) => r.relationType === type)
-    .map((r) => r.requiredCourse.id);
+    .filter(
+      (r) =>
+        type === CourseRelationType.COREQUISITE ||
+        !corequisiteIds.has(r.requiredCourse.id),
+    )
+    .map((r) => r.requiredCourse);
+};
+
+const requisiteIds = (course: MajorCourse, type: CourseRelationType) =>
+  requisitesOf(course, type).map((r) => r.id);
 
 const requisiteCodes = (course: MajorCourse, type: CourseRelationType) =>
-  course.requisites
-    .filter((r) => r.relationType === type)
-    .map((r) => r.requiredCourse.code);
+  requisitesOf(course, type).map((r) => r.code);
 
 const checkPlan = (
   semesters: StudyPlanData["semesters"],
@@ -576,6 +589,7 @@ export const generateStudyPlan = async (
         })),
       }),
       [],
+      ThinkingLevel.LOW,
     );
   } catch (error) {
     throw new AppErr("The AI provider failed, try again later", 502, {
