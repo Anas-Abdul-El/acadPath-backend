@@ -2,6 +2,8 @@ import type {
   AcademicRecordStatus,
   CourseCategory,
   LetterGrade,
+  ResourceDifficulty,
+  ResourcePlatform,
   Term,
   YearOfStudy,
 } from "../generated/prisma/enums.js";
@@ -115,12 +117,7 @@ export interface RequisiteDto extends CourseRefDto {
   met: boolean;
 }
 
-export interface StudentCourseDto extends CourseSummaryDto {
-  majorId: string;
-  description: string | null;
-  offeredTerms: Term[];
-  prerequisites: RequisiteDto[];
-  corequisites: RequisiteDto[];
+export interface StudentStatusDto {
   status: StudentCourseStatus;
   statusDetail: {
     grade: LetterGrade | null;
@@ -129,6 +126,47 @@ export interface StudentCourseDto extends CourseSummaryDto {
   };
 }
 
+export interface StudentCourseDto extends CourseSummaryDto, StudentStatusDto {
+  majorId: string;
+  description: string | null;
+  offeredTerms: Term[];
+  prerequisites: RequisiteDto[];
+  corequisites: RequisiteDto[];
+}
+
 export interface StudentCoursesOutput {
   data: StudentCourseDto[];
+}
+
+export interface CourseDto extends CourseSummaryDto {
+  majorId: string;
+  description: string | null;
+  offeredTerms: Term[];
+  prerequisites: CourseRefDto[];
+  corequisites: CourseRefDto[];
+}
+
+export interface LearningResourceDto {
+  id: string;
+  title: string;
+  url: string;
+  platform: ResourcePlatform;
+  provider: string | null;
+  format: string | null;
+  description: string | null;
+  duration: string | null;
+  difficulty: ResourceDifficulty | null;
+  topics: string[];
+  verified: boolean;
+  courses: CourseRefDto[];
+}
+
+export interface CourseDetailsDto extends CourseDto {
+  requiredFor: CourseRefDto[];
+  resources: LearningResourceDto[];
+  studentStatus: StudentStatusDto | null;
+}
+
+export interface CourseDetailsOutput {
+  data: CourseDetailsDto;
 }
