@@ -3,11 +3,13 @@ import AppErr from "../libs/appErr.js";
 import * as appService from "../services/app.service.js";
 import type {
   AcademicRecordsQuery,
+  CourseParams,
   StudentCoursesQuery,
 } from "../schemas/app.schema.js";
 import type {
   AcademicRecordsOutput,
   AcademicSummaryOutput,
+  CourseDetailsOutput,
   StudentCoursesOutput,
 } from "../types/app.dto.js";
 
@@ -45,6 +47,23 @@ export const listCourses = async (
 
   const query: StudentCoursesQuery = res.locals.query;
   const data = await appService.listCourses(authUser.id, query);
+
+  res.send({ data });
+};
+
+export const getCourseDetails = async (
+  req: Request,
+  res: Response<CourseDetailsOutput>,
+) => {
+  const authUser = res.locals.user;
+  if (!authUser) throw new AppErr("Missing or malformed access token", 401);
+
+  const { courseId }: CourseParams = res.locals.params;
+  const data = await appService.getCourseDetails(
+    courseId,
+    authUser.id,
+    authUser.role,
+  );
 
   res.send({ data });
 };
