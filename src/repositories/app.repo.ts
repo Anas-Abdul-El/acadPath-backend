@@ -13,6 +13,12 @@ const courseSummarySelect = {
   category: true,
 } as const satisfies Prisma.CourseSelect;
 
+const courseRefSelect = {
+  id: true,
+  code: true,
+  name: true,
+} as const satisfies Prisma.CourseSelect;
+
 export const getSummaryProfile = async (userId: string) => {
   return prisma.studentProfile.findUnique({
     where: { userId },
@@ -81,6 +87,53 @@ export const getLatestStudyPlan = async (userId: string) => {
   });
 };
 
+export const getStudyPlan = async (userId: string) => {
+  return prisma.studyPlan.findFirst({
+    where: { student: { userId } },
+    select: {
+      id: true,
+      name: true,
+      assumptions: true,
+      notes: true,
+      createdAt: true,
+      student: {
+        select: { major: { select: { totalRequiredCredits: true } } },
+      },
+      semesters: {
+        select: {
+          id: true,
+          term: true,
+          year: true,
+          rationale: true,
+          courses: {
+            select: {
+              id: true,
+              status: true,
+              course: {
+                select: {
+                  ...courseSummarySelect,
+                  majorId: true,
+                  description: true,
+                  offeredTerms: true,
+                  requisites: {
+                    select: {
+                      relationType: true,
+                      requiredCourse: { select: courseRefSelect },
+                    },
+                    orderBy: { requiredCourse: { code: "asc" } },
+                  },
+                },
+              },
+            },
+            orderBy: { course: { code: "asc" } },
+          },
+        },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+};
+
 export const getStudentMajorId = async (userId: string) => {
   return prisma.studentProfile.findUnique({
     where: { userId },
@@ -120,12 +173,6 @@ export const listMajorCoursesWithRequisites = async (
     orderBy: { code: "asc" },
   });
 };
-
-const courseRefSelect = {
-  id: true,
-  code: true,
-  name: true,
-} as const satisfies Prisma.CourseSelect;
 
 export const getCourseDetails = async (courseId: string) => {
   return prisma.course.findUnique({
