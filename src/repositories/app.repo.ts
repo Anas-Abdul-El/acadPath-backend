@@ -1,4 +1,8 @@
-import { CourseRelationType, Prisma } from "../generated/prisma/client.js";
+import {
+  CourseRelationType,
+  Prisma,
+  type Term,
+} from "../generated/prisma/client.js";
 import { prisma } from "../libs/prisma.js";
 import type {
   AcademicRecordsQuery,
@@ -131,6 +135,37 @@ export const getStudyPlan = async (userId: string) => {
       },
     },
     orderBy: { createdAt: "desc" },
+  });
+};
+
+export const createStudyPlan = async (
+  studentId: string,
+  plan: {
+    assumptions: string[];
+    notes: string[];
+    semesters: {
+      term: Term;
+      year: number;
+      rationale: string | null;
+      courseIds: string[];
+    }[];
+  },
+) => {
+  return prisma.studyPlan.create({
+    data: {
+      studentId,
+      assumptions: plan.assumptions,
+      notes: plan.notes,
+      semesters: {
+        create: plan.semesters.map(({ courseIds, ...semester }) => ({
+          ...semester,
+          courses: {
+            create: courseIds.map((courseId) => ({ courseId })),
+          },
+        })),
+      },
+    },
+    select: { id: true },
   });
 };
 
