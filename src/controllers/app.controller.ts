@@ -4,6 +4,7 @@ import * as appService from "../services/app.service.js";
 import type {
   AcademicRecordsQuery,
   CourseParams,
+  GenerateStudyPlanBody,
   StudentCoursesQuery,
 } from "../schemas/app.schema.js";
 import type {
@@ -79,4 +80,16 @@ export const getStudyPlan = async (
   const data = await appService.getStudyPlan(authUser.id);
 
   res.send({ data });
+};
+
+export const generateStudyPlan = async (
+  req: Request<unknown, unknown, GenerateStudyPlanBody>,
+  res: Response<StudyPlanOutput>,
+) => {
+  const authUser = res.locals.user;
+  if (!authUser) throw new AppErr("Missing or malformed access token", 401);
+
+  const data = await appService.generateStudyPlan(authUser.id, req.body);
+
+  res.status(201).send({ data });
 };
