@@ -2,6 +2,7 @@ import z from "zod";
 import {
   AcademicRecordStatus,
   CourseCategory,
+  LetterGrade,
   Term,
 } from "../generated/prisma/enums.js";
 
@@ -63,3 +64,45 @@ export const studyPlanDataSchema = z.object({
 
 /** StudyPlanData is the validated AI reply: { assumptions, notes, semesters }. */
 export type StudyPlanData = z.infer<typeof studyPlanDataSchema>;
+
+/** whatIfSchema validates the POST /me/what-if body: a 10–500 character scenario. */
+export const whatIfSchema = z.object({
+  scenario: z
+    .string({ error: "Describe a scenario" })
+    .trim()
+    .min(10, { error: "Use at least 10 characters" })
+    .max(500, { error: "Use 500 characters or fewer" }),
+});
+
+/** WhatIfBody is the validated body: { scenario }. */
+export type WhatIfBody = z.infer<typeof whatIfSchema>;
+
+/** whatIfIntentSchema validates the what-if AI's reply: a parsed scenario or an unclear one. */
+export const whatIfIntentSchema = z.discriminatedUnion("status", [
+  z.object({
+    status: z.literal("ok"),
+    kind: z.enum([
+      "fail",
+      "grade-change",
+      "retake",
+      "add",
+      "move-earlier",
+      "drop",
+      "swap",
+    ]),
+    courses: z.array(z.string().min(1)).min(1),
+    grade: z.enum(LetterGrade).nullable().default(null),
+    term: z
+      .object({ term: z.enum(Term), year: z.number().int() })
+      .nullable()
+      .default(null),
+  }),
+  z.object({
+    status: z.literal("unclear"),
+    message: z.string().min(1),
+    suggestions: z.array(z.string()).default([]),
+  }),
+]);
+
+/** WhatIfIntent is the validated AI reply. */
+export type WhatIfIntent = z.infer<typeof whatIfIntentSchema>;
