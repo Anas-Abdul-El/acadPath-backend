@@ -5,7 +5,10 @@ import type {
   RefreshTokenInput,
   SigninInput,
 } from "../schemas/auth.schema.js";
-import authService from "../services/index.js";
+import * as loginService from "../services/auth/login.service.js";
+import * as logoutService from "../services/auth/logout.service.js";
+import * as refreshTokenService from "../services/auth/refresh-token.service.js";
+import * as signInService from "../services/auth/sign-in.service.js";
 import { authConfig } from "../config/auth.js";
 import type {
   LoginOutput,
@@ -25,9 +28,9 @@ export const signIn = async (
   res: Response<SigninOutput>,
   next: NextFunction,
 ) => {
-  const user = await authService.signIn(req.body);
-
-  const { accessToken, refreshToken } = await authService.startSession(user);
+  const { user, accessToken, refreshToken } = await signInService.signIn(
+    req.body,
+  );
 
   res.cookie(authConfig.refreshCookieName, refreshToken, {
     ...refreshCookieOptions,
@@ -47,9 +50,9 @@ export const login = async (
   res: Response<LoginOutput>,
   next: NextFunction,
 ) => {
-  const user = await authService.login(req.body);
-
-  const { accessToken, refreshToken } = await authService.startSession(user);
+  const { user, accessToken, refreshToken } = await loginService.login(
+    req.body,
+  );
 
   res.cookie(authConfig.refreshCookieName, refreshToken, {
     ...refreshCookieOptions,
@@ -69,7 +72,7 @@ export const refresh = async (req: Request, res: Response<RefreshOutput>) => {
     .cookies as RefreshTokenInput;
 
   const { user, accessToken, refreshToken } =
-    await authService.refresh(oldRefreshToken);
+    await refreshTokenService.refresh(oldRefreshToken);
 
   res.cookie(authConfig.refreshCookieName, refreshToken, {
     ...refreshCookieOptions,
@@ -87,7 +90,7 @@ export const refresh = async (req: Request, res: Response<RefreshOutput>) => {
 export const logout = async (req: Request, res: Response) => {
   const { refreshToken } = res.locals.cookies as LogoutInput;
 
-  await authService.logout(refreshToken);
+  await logoutService.logout(refreshToken);
 
   res.clearCookie(authConfig.refreshCookieName, refreshCookieOptions);
   res.sendStatus(204);
