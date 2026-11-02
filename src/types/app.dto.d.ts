@@ -203,3 +203,60 @@ export interface StudyPlanDto {
 export interface StudyPlanOutput {
   data: StudyPlanDto | null;
 }
+
+export type ScenarioKind =
+  | "fail"
+  | "grade-change"
+  | "retake"
+  | "add"
+  | "move-earlier"
+  | "drop"
+  | "swap";
+
+export interface SemesterLoadDto {
+  label: string;
+  courses: string[];
+  credits: number;
+}
+
+export interface PlanChangeDto {
+  kind: "added" | "removed" | "moved" | "retake";
+  code: string;
+  title: string;
+  from?: string;
+  to?: string;
+}
+
+export interface ComparisonRowDto {
+  label: string;
+  current: string;
+  scenario: string;
+  effect: "better" | "worse" | "neutral";
+}
+
+export interface ScenarioAnalysisDto {
+  status: "ok";
+  kind: ScenarioKind;
+  headline: string;
+  summary: string;
+  gpa: { label: string; current: number; scenario: number };
+  credits: { label: string; current: number; scenario: number };
+  graduation: { current: string; scenario: string; semestersDelta: number };
+  planChanges: PlanChangeDto[];
+  semesters: { current: SemesterLoadDto[]; scenario: SemesterLoadDto[] };
+  comparison: ComparisonRowDto[];
+  warnings: string[];
+  assumptions: string[];
+}
+
+export interface UnclearScenarioDto {
+  status: "unclear";
+  message: string;
+  suggestions: string[];
+}
+
+export type ScenarioResultDto = ScenarioAnalysisDto | UnclearScenarioDto;
+
+export interface WhatIfOutput {
+  data: ScenarioResultDto;
+}
