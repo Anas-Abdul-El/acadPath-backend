@@ -6,6 +6,7 @@ import type {
   CourseParams,
   GenerateStudyPlanBody,
   StudentCoursesQuery,
+  WhatIfBody,
 } from "../schemas/app.schema.js";
 import type {
   AcademicRecordsOutput,
@@ -13,6 +14,7 @@ import type {
   CourseDetailsOutput,
   StudentCoursesOutput,
   StudyPlanOutput,
+  WhatIfOutput,
 } from "../types/app.dto.js";
 
 export const getAcademicSummary = async (
@@ -92,4 +94,16 @@ export const generateStudyPlan = async (
   const data = await appService.generateStudyPlan(authUser.id, req.body);
 
   res.status(201).send({ data });
+};
+
+export const analyzeWhatIf = async (
+  req: Request<unknown, unknown, WhatIfBody>,
+  res: Response<WhatIfOutput>,
+) => {
+  const authUser = res.locals.user;
+  if (!authUser) throw new AppErr("Missing or malformed access token", 401);
+
+  const data = await appService.analyzeWhatIf(authUser.id, req.body);
+
+  res.send({ data });
 };
