@@ -11,6 +11,7 @@ import {
   courseParamsSchema,
   generateStudyPlanSchema,
   studentCoursesQuerySchema,
+  whatIfSchema,
 } from "../schemas/app.schema.js";
 import catchAsync from "../utils/catchAsync";
 import appController from "../controllers";
@@ -54,6 +55,14 @@ appRouter.post(
   authorize("STUDENT"),
   validateBody(generateStudyPlanSchema),
   catchAsync(appController.generateStudyPlan),
+);
+
+appRouter.post(
+  "/what-if",
+  authenticate,
+  authorize("STUDENT"),
+  validateBody(whatIfSchema),
+  catchAsync(appController.analyzeWhatIf),
 );
 
 courseRouter.get(
