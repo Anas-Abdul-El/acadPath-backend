@@ -41,6 +41,7 @@ export type Outcome = {
   retakes?: string[];
   carriedOver?: string[];
   target?: { pending: PendingCourse; index: number };
+  blockedSummary?: (placed: number) => string;
   assumptions?: string[];
 };
 
@@ -161,6 +162,10 @@ const moveOutcome = (
     pending: [...withoutPlanned, moved],
     summary: `Taking ${course.code} in ${termLabel(termAt(index))} instead of ${plannedLabel} frees up that semester, and courses that need it can start sooner.`,
     target: { pending: moved, index },
+    blockedSummary: (placed) =>
+      placed >= plannedItem.earliest
+        ? `${course.code} can't move earlier than ${plannedLabel} because of its prerequisites or offered terms.`
+        : `${course.code} can't be taken in ${termLabel(termAt(index))}, but it can move up to ${termLabel(termAt(placed))} instead of ${plannedLabel}.`,
   };
 };
 

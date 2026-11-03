@@ -348,12 +348,15 @@ export const analyzeWhatIf = async (
   ];
 
   const warnings: string[] = [];
+  let summary = outcome.summary;
   if (outcome.target) {
     const placed = placedAt.get(outcome.target.pending);
-    if (placed !== undefined && placed > outcome.target.index)
+    if (placed !== undefined && placed > outcome.target.index) {
       warnings.push(
         `${outcome.target.pending.course.code} can't be taken in ${termLabel(termAt(outcome.target.index))} because of its prerequisites or offered terms, so it lands in ${termLabel(termAt(placed))}.`,
       );
+      if (outcome.blockedSummary) summary = outcome.blockedSummary(placed);
+    }
   }
   if (unscheduled.length)
     warnings.push(
@@ -373,7 +376,7 @@ export const analyzeWhatIf = async (
     status: "ok",
     kind: intent.kind,
     headline,
-    summary: outcome.summary,
+    summary,
     gpa,
     credits,
     graduation,
