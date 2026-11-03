@@ -1,6 +1,6 @@
 import { CourseRelationType } from "../../../generated/prisma/client.js";
 import type { TermDto } from "../../../types/app.dto.js";
-import { requisiteIds, type MajorCourse } from "../../shared/courses.js";
+import { requisiteIds, type MajorCourse } from "../../shared/index.js";
 
 export type PendingCourse = {
   course: MajorCourse;

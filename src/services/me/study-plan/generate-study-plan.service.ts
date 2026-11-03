@@ -14,9 +14,11 @@ import {
   requisiteIds,
   sumCredits,
   type MajorCourse,
-} from "../../shared/courses.js";
-import { askAiForJson } from "../../shared/ai.js";
-import { calendarTerm, nextSemester, termKey } from "../../shared/terms.js";
+  askAiForJson,
+  calendarTerm,
+  nextSemester,
+  termKey,
+} from "../../shared/index.js";
 import { getStudyPlan } from "./get-study-plan.service.js";
 
 const checkPlan = (

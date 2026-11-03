@@ -6,10 +6,14 @@ import {
 import AppErr from "../../../libs/appErr.js";
 import * as appRepo from "../../../repositories/app.repo.js";
 import type { AcademicSummaryDto } from "../../../types/app.dto.js";
-import { sumCredits } from "../../shared/courses.js";
-import { round2, weightedGpa } from "../../shared/grades.js";
-import type { AcademicRecord } from "../../shared/student-progress.js";
-import { groupByTerm, termKey } from "../../shared/terms.js";
+import {
+  sumCredits,
+  round2,
+  weightedGpa,
+  type AcademicRecord,
+  groupByTerm,
+  termKey,
+} from "../../shared/index.js";
 
 const calculateGpa = (records: AcademicRecord[]) =>
   weightedGpa(

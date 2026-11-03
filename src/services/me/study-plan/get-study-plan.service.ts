@@ -4,8 +4,7 @@ import {
 } from "../../../generated/prisma/client.js";
 import * as appRepo from "../../../repositories/app.repo.js";
 import type { CourseDto, StudyPlanDto } from "../../../types/app.dto.js";
-import { splitRequisites, sumCredits } from "../../shared/courses.js";
-import { termKey } from "../../shared/terms.js";
+import { splitRequisites, sumCredits, termKey } from "../../shared/index.js";
 
 type PlanCourse = NonNullable<
   Awaited<ReturnType<typeof appRepo.getStudyPlan>>

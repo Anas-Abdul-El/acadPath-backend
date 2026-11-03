@@ -2,8 +2,7 @@ import { UserRole } from "../../generated/prisma/client.js";
 import AppErr from "../../libs/appErr.js";
 import * as appRepo from "../../repositories/app.repo.js";
 import type { CourseDetailsDto, StudentStatusDto } from "../../types/app.dto.js";
-import { splitRequisites } from "../shared/courses.js";
-import { buildStudentProgress } from "../shared/student-progress.js";
+import { splitRequisites, buildStudentProgress } from "../shared/index.js";
 
 export const getCourseDetails = async (
   courseId: string,

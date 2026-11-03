@@ -17,17 +17,19 @@ import type {
   SemesterLoadDto,
   TermDto,
 } from "../../../types/app.dto.js";
-import { askAiForJson } from "../../shared/ai.js";
-import { normalizeCode, sumCredits, type MajorCourse } from "../../shared/courses.js";
-import { weightedGpa } from "../../shared/grades.js";
-import { buildStudentProgress } from "../../shared/student-progress.js";
 import {
+  askAiForJson,
+  normalizeCode,
+  sumCredits,
+  type MajorCourse,
+  weightedGpa,
+  buildStudentProgress,
   graduationLabel,
   groupByTerm,
   nextSemester,
   termKey,
   termLabel,
-} from "../../shared/terms.js";
+} from "../../shared/index.js";
 import {
   buildOutcome,
   type GpaEntry,

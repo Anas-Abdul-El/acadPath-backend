@@ -2,7 +2,7 @@ import { UserRole, YearOfStudy } from "../../generated/prisma/client.js";
 import AppErr from "../../libs/appErr.js";
 import * as meRepo from "../../repositories/me.repo.js";
 import type { MeData } from "../../types/me.dto.js";
-import { getCatalogStatus } from "./university/catalog-status.js";
+import { getCatalogStatus } from "./university/index.js";
 
 export const getMeData = async (userId: string): Promise<MeData> => {
   const userInfo = await meRepo.getUserWithProfile(userId);

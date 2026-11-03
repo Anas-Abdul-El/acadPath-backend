@@ -1,7 +1,7 @@
 import * as appRepo from "../../../repositories/app.repo.js";
 import type { AcademicRecordsQuery } from "../../../schemas/app.schema.js";
 import type { AcademicRecordDto } from "../../../types/app.dto.js";
-import { termKey } from "../../shared/terms.js";
+import { termKey } from "../../shared/index.js";
 
 export const listAcademicRecords = async (
   userId: string,

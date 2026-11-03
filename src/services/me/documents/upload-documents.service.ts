@@ -12,13 +12,13 @@ import {
   type UploadSourcesInput,
 } from "../../../schemas/me.schema.js";
 import type { StudentDocumentDto } from "../../../types/me.dto.js";
-import { normalizeCode } from "../../shared/courses.js";
+import { normalizeCode } from "../../shared/index.js";
 import {
   parseUploadedPdf,
   type MajorInput,
   type UploadedFile,
-} from "../university/catalog-extraction.js";
-import { getSelection } from "../university/student-selection.js";
+  getSelection,
+} from "../university/index.js";
 import { toDocumentDto } from "./list-documents.service.js";
 
 type StoredFile = UploadedFile & { key: string };

@@ -1,12 +1,7 @@
 import type { Request, Response } from "express";
 import AppErr from "../libs/appErr.js";
-import * as courseDetailsService from "../services/courses/get-course-details.service.js";
-import * as academicSummaryService from "../services/me/academic/get-academic-summary.service.js";
-import * as academicRecordsService from "../services/me/academic/list-academic-records.service.js";
-import * as listCoursesService from "../services/me/courses/list-courses.service.js";
-import * as generateStudyPlanService from "../services/me/study-plan/generate-study-plan.service.js";
-import * as getStudyPlanService from "../services/me/study-plan/get-study-plan.service.js";
-import * as whatIfService from "../services/me/what-if/analyze-what-if.service.js";
+import * as coursesService from "../services/courses/index.js";
+import * as meService from "../services/me/index.js";
 import type {
   AcademicRecordsQuery,
   CourseParams,
@@ -30,7 +25,7 @@ export const getAcademicSummary = async (
   const authUser = res.locals.user;
   if (!authUser) throw new AppErr("Missing or malformed access token", 401);
 
-  const data = await academicSummaryService.getAcademicSummary(authUser.id);
+  const data = await meService.getAcademicSummary(authUser.id);
 
   res.send({ data });
 };
@@ -43,7 +38,7 @@ export const listAcademicRecords = async (
   if (!authUser) throw new AppErr("Missing or malformed access token", 401);
 
   const query: AcademicRecordsQuery = res.locals.query;
-  const data = await academicRecordsService.listAcademicRecords(authUser.id, query);
+  const data = await meService.listAcademicRecords(authUser.id, query);
 
   res.send({ data });
 };
@@ -56,7 +51,7 @@ export const listCourses = async (
   if (!authUser) throw new AppErr("Missing or malformed access token", 401);
 
   const query: StudentCoursesQuery = res.locals.query;
-  const data = await listCoursesService.listCourses(authUser.id, query);
+  const data = await meService.listCourses(authUser.id, query);
 
   res.send({ data });
 };
@@ -69,7 +64,7 @@ export const getCourseDetails = async (
   if (!authUser) throw new AppErr("Missing or malformed access token", 401);
 
   const { courseId }: CourseParams = res.locals.params;
-  const data = await courseDetailsService.getCourseDetails(
+  const data = await coursesService.getCourseDetails(
     courseId,
     authUser.id,
     authUser.role,
@@ -85,7 +80,7 @@ export const getStudyPlan = async (
   const authUser = res.locals.user;
   if (!authUser) throw new AppErr("Missing or malformed access token", 401);
 
-  const data = await getStudyPlanService.getStudyPlan(authUser.id);
+  const data = await meService.getStudyPlan(authUser.id);
 
   res.send({ data });
 };
@@ -97,7 +92,7 @@ export const generateStudyPlan = async (
   const authUser = res.locals.user;
   if (!authUser) throw new AppErr("Missing or malformed access token", 401);
 
-  const data = await generateStudyPlanService.generateStudyPlan(authUser.id, req.body);
+  const data = await meService.generateStudyPlan(authUser.id, req.body);
 
   res.status(201).send({ data });
 };
@@ -109,7 +104,7 @@ export const analyzeWhatIf = async (
   const authUser = res.locals.user;
   if (!authUser) throw new AppErr("Missing or malformed access token", 401);
 
-  const data = await whatIfService.analyzeWhatIf(authUser.id, req.body);
+  const data = await meService.analyzeWhatIf(authUser.id, req.body);
 
   res.send({ data });
 };

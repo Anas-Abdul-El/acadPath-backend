@@ -5,9 +5,7 @@ import type {
   StudentStatusDto,
   TermDto,
 } from "../../../types/app.dto.js";
-import type { MajorCourse } from "../../shared/courses.js";
-import { gradeLabel } from "../../shared/grades.js";
-import { termLabel } from "../../shared/terms.js";
+import { type MajorCourse, gradeLabel, termLabel } from "../../shared/index.js";
 import type { PendingCourse } from "./scheduler.js";
 
 export type GpaEntry = {

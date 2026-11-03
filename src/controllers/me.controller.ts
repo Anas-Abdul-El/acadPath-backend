@@ -1,13 +1,6 @@
 import type { Request, Response } from "express";
 import AppErr from "../libs/appErr.js";
-import * as completeOnboardingService from "../services/me/complete-onboarding.service.js";
-import * as listDocumentsService from "../services/me/documents/list-documents.service.js";
-import * as uploadDocumentsService from "../services/me/documents/upload-documents.service.js";
-import * as getMeService from "../services/me/get-me.service.js";
-import * as universitySourcesService from "../services/me/university/get-university-sources.service.js";
-import * as selectUniversityService from "../services/me/university/select-university.service.js";
-import * as uploadSourcesService from "../services/me/university/upload-university-sources.service.js";
-import * as updateProfileService from "../services/me/update-profile.service.js";
+import * as meService from "../services/me/index.js";
 import type {
   SelectUniversityBody,
   UpdateProfileBody,
@@ -26,7 +19,7 @@ export const getMeData = async (req: Request, res: Response<MeOutput>) => {
   const authUser = res.locals.user;
   if (!authUser) throw new AppErr("Missing or malformed access token", 401);
 
-  const data = await getMeService.getMeData(authUser.id);
+  const data = await meService.getMeData(authUser.id);
 
   res.send({ data });
 };
@@ -38,7 +31,7 @@ export const selectUniversity = async (
   const authUser = res.locals.user;
   if (!authUser) throw new AppErr("Missing or malformed access token", 401);
 
-  const data = await selectUniversityService.selectUniversity(
+  const data = await meService.selectUniversity(
     authUser.id,
     req.body,
   );
@@ -54,7 +47,7 @@ export const uploadSources = async (
   if (!authUser) throw new AppErr("Missing or malformed access token", 401);
 
   const files: UploadSourcesInput = res.locals.files;
-  const data = await uploadSourcesService.uploadSources(authUser.id, files);
+  const data = await meService.uploadSources(authUser.id, files);
 
   res.send({ data });
 };
@@ -66,7 +59,7 @@ export const updateProfile = async (
   const authUser = res.locals.user;
   if (!authUser) throw new AppErr("Missing or malformed access token", 401);
 
-  const data = await updateProfileService.updateProfile(authUser.id, req.body);
+  const data = await meService.updateProfile(authUser.id, req.body);
 
   res.send({ data });
 };
@@ -79,7 +72,7 @@ export const uploadDocuments = async (
   if (!authUser) throw new AppErr("Missing or malformed access token", 401);
 
   const files: UploadSourcesInput = res.locals.files;
-  const data = await uploadDocumentsService.uploadDocuments(
+  const data = await meService.uploadDocuments(
     authUser.id,
     req.body.type,
     files,
@@ -95,7 +88,7 @@ export const completeOnboarding = async (
   const authUser = res.locals.user;
   if (!authUser) throw new AppErr("Missing or malformed access token", 401);
 
-  const data = await completeOnboardingService.completeOnboarding(authUser.id);
+  const data = await meService.completeOnboarding(authUser.id);
 
   res.send({ data });
 };
@@ -107,7 +100,7 @@ export const listDocuments = async (
   const authUser = res.locals.user;
   if (!authUser) throw new AppErr("Missing or malformed access token", 401);
 
-  const data = await listDocumentsService.listDocuments(authUser.id);
+  const data = await meService.listDocuments(authUser.id);
 
   res.send({ data });
 };
@@ -119,7 +112,7 @@ export const getStudentUniversitySources = async (
   const authUser = res.locals.user;
   if (!authUser) throw new AppErr("Missing or malformed access token", 401);
 
-  const data = await universitySourcesService.getStudentUniversitySources(authUser.id);
+  const data = await meService.getStudentUniversitySources(authUser.id);
 
   res.send({ data });
 };

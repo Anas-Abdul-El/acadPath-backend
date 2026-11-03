@@ -5,10 +5,7 @@ import type {
   RefreshTokenInput,
   SigninInput,
 } from "../schemas/auth.schema.js";
-import * as loginService from "../services/auth/login.service.js";
-import * as logoutService from "../services/auth/logout.service.js";
-import * as refreshTokenService from "../services/auth/refresh-token.service.js";
-import * as signInService from "../services/auth/sign-in.service.js";
+import * as authService from "../services/auth/index.js";
 import { authConfig } from "../config/auth.js";
 import type {
   LoginOutput,
@@ -28,7 +25,7 @@ export const signIn = async (
   res: Response<SigninOutput>,
   next: NextFunction,
 ) => {
-  const { user, accessToken, refreshToken } = await signInService.signIn(
+  const { user, accessToken, refreshToken } = await authService.signIn(
     req.body,
   );
 
@@ -50,7 +47,7 @@ export const login = async (
   res: Response<LoginOutput>,
   next: NextFunction,
 ) => {
-  const { user, accessToken, refreshToken } = await loginService.login(
+  const { user, accessToken, refreshToken } = await authService.login(
     req.body,
   );
 
@@ -72,7 +69,7 @@ export const refresh = async (req: Request, res: Response<RefreshOutput>) => {
     .cookies as RefreshTokenInput;
 
   const { user, accessToken, refreshToken } =
-    await refreshTokenService.refresh(oldRefreshToken);
+    await authService.refresh(oldRefreshToken);
 
   res.cookie(authConfig.refreshCookieName, refreshToken, {
     ...refreshCookieOptions,
@@ -90,7 +87,7 @@ export const refresh = async (req: Request, res: Response<RefreshOutput>) => {
 export const logout = async (req: Request, res: Response) => {
   const { refreshToken } = res.locals.cookies as LogoutInput;
 
-  await logoutService.logout(refreshToken);
+  await authService.logout(refreshToken);
 
   res.clearCookie(authConfig.refreshCookieName, refreshCookieOptions);
   res.sendStatus(204);
