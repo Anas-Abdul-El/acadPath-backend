@@ -239,7 +239,7 @@ export interface ScenarioAnalysisDto {
   kind: ScenarioKind;
   headline: string;
   summary: string;
-  gpa: { label: string; current: number; scenario: number };
+  gpa: { label: string; current: number | null; scenario: number | null };
   credits: { label: string; current: number; scenario: number };
   graduation: { current: string; scenario: string; semestersDelta: number };
   planChanges: PlanChangeDto[];

@@ -37,8 +37,6 @@ import { scheduleCourses, type PendingCourse } from "./scheduler.js";
 const semestersText = (count: number) =>
   count === 1 ? "one semester" : `${count} semesters`;
 
-const gpaOf = (entries: GpaEntry[]) => weightedGpa(entries) ?? 0;
-
 export const analyzeWhatIf = async (
   userId: string,
   { scenario }: WhatIfBody,
@@ -239,8 +237,8 @@ export const analyzeWhatIf = async (
     (currentLabel ? `Projected GPA after ${currentLabel}` : "Cumulative GPA");
   const gpa = {
     label: gpaLabel,
-    current: gpaOf(baseEntries),
-    scenario: gpaOf(outcome.entries),
+    current: weightedGpa(baseEntries),
+    scenario: weightedGpa(outcome.entries),
   };
   const credits = {
     label: currentLabel
@@ -296,16 +294,19 @@ export const analyzeWhatIf = async (
 
   const compare = (
     label: string,
-    current: number,
-    scenarioValue: number,
+    current: number | null,
+    scenarioValue: number | null,
     higherIsBetter: boolean | null,
     format: (value: number) => string = String,
   ): ComparisonRowDto => ({
     label,
-    current: format(current),
-    scenario: format(scenarioValue),
+    current: current === null ? "—" : format(current),
+    scenario: scenarioValue === null ? "—" : format(scenarioValue),
     effect:
-      current === scenarioValue || higherIsBetter === null
+      current === null ||
+      scenarioValue === null ||
+      current === scenarioValue ||
+      higherIsBetter === null
         ? "neutral"
         : scenarioValue > current === higherIsBetter
           ? "better"
@@ -368,9 +369,11 @@ export const analyzeWhatIf = async (
       ? `Graduation moves ${semestersText(semestersDelta)} later`
       : semestersDelta < 0
         ? `Graduation moves ${semestersText(-semestersDelta)} earlier`
-        : gpa.scenario !== gpa.current
-          ? `Your GPA goes ${gpa.scenario > gpa.current ? "up" : "down"} to ${gpa.scenario.toFixed(2)}`
-          : "Your graduation date holds";
+        : gpa.scenario === null || gpa.scenario === gpa.current
+          ? "Your graduation date holds"
+          : gpa.current === null
+            ? `Your GPA would be ${gpa.scenario.toFixed(2)}`
+            : `Your GPA goes ${gpa.scenario > gpa.current ? "up" : "down"} to ${gpa.scenario.toFixed(2)}`;
 
   return {
     status: "ok",
