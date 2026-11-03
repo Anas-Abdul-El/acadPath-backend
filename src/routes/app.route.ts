@@ -8,6 +8,7 @@ import {
 } from "../middlewares";
 import {
   academicRecordsQuerySchema,
+  advisorChatSchema,
   courseParamsSchema,
   generateStudyPlanSchema,
   studentCoursesQuerySchema,
@@ -63,6 +64,14 @@ appRouter.post(
   authorize("STUDENT"),
   validateBody(whatIfSchema),
   catchAsync(appController.analyzeWhatIf),
+);
+
+appRouter.post(
+  "/advisor/chat",
+  authenticate,
+  authorize("STUDENT"),
+  validateBody(advisorChatSchema),
+  catchAsync(appController.advisorChat),
 );
 
 courseRouter.get(
