@@ -106,3 +106,32 @@ export const whatIfIntentSchema = z.discriminatedUnion("status", [
 
 /** WhatIfIntent is the validated AI reply. */
 export type WhatIfIntent = z.infer<typeof whatIfIntentSchema>;
+
+const advisorMessageSchema = z.discriminatedUnion("role", [
+  z.object({
+    role: z.literal("student"),
+    content: z
+      .string({ error: "Write a message" })
+      .trim()
+      .min(1, { error: "Write a message" })
+      .max(1000, { error: "Use 1000 characters or fewer" }),
+  }),
+  z.object({
+    role: z.literal("assistant"),
+    content: z.string().trim().min(1).max(8000),
+  }),
+]);
+
+/** advisorChatSchema validates the POST /me/advisor/chat body: 1–20 messages, oldest first, ending with the student's. */
+export const advisorChatSchema = z.object({
+  messages: z
+    .array(advisorMessageSchema, { error: "Send the chat messages" })
+    .min(1, { error: "Send at least one message" })
+    .max(20, { error: "Send 20 messages or fewer" })
+    .refine((messages) => !messages.length || messages.at(-1)?.role === "student", {
+      error: "The last message must be from the student",
+    }),
+});
+
+/** AdvisorChatBody is the validated body: { messages }. */
+export type AdvisorChatBody = z.infer<typeof advisorChatSchema>;
