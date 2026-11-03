@@ -41,6 +41,26 @@ export const aiMessage = async (
   return response.choices[0]?.message.content ?? null;
 };
 
+export async function* aiStream(
+  prompt: string,
+  messages: { role: "user" | "assistant"; content: string }[],
+  signal: AbortSignal,
+): AsyncGenerator<string> {
+  const stream = await client.chat.completions.create(
+    {
+      model: "nvidia/nemotron-3-ultra-550b-a55b:free",
+      messages: [{ role: "system", content: prompt }, ...messages],
+      stream: true,
+    },
+    { signal },
+  );
+
+  for await (const chunk of stream) {
+    const text = chunk.choices[0]?.delta.content;
+    if (text) yield text;
+  }
+}
+
 const gemini = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY!,
 });
