@@ -1,9 +1,11 @@
 import type { Request, Response } from "express";
+import logger from "../config/logger.js";
 import AppErr from "../libs/appErr.js";
 import * as coursesService from "../services/courses/index.js";
 import * as meService from "../services/me/index.js";
 import type {
   AcademicRecordsQuery,
+  AdvisorChatBody,
   CourseParams,
   GenerateStudyPlanBody,
   StudentCoursesQuery,
@@ -107,4 +109,42 @@ export const analyzeWhatIf = async (
   const data = await meService.analyzeWhatIf(authUser.id, req.body);
 
   res.send({ data });
+};
+
+export const advisorChat = async (
+  req: Request<unknown, unknown, AdvisorChatBody>,
+  res: Response,
+) => {
+  const authUser = res.locals.user;
+  if (!authUser) throw new AppErr("Missing or malformed access token", 401);
+
+  const abort = new AbortController();
+  res.on("close", () => abort.abort());
+
+  const reply = await meService.streamAdvisorReply(
+    authUser.id,
+    req.body,
+    abort.signal,
+  );
+
+  res.status(200).set({
+    "Content-Type": "text/event-stream",
+    "Cache-Control": "no-cache",
+    Connection: "keep-alive",
+  });
+  res.flushHeaders();
+
+  const send = (event: "delta" | "done" | "error", data: object) =>
+    res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+
+  try {
+    for await (const text of reply) send("delta", { text });
+    send("done", {});
+  } catch (error) {
+    if (!abort.signal.aborted) {
+      logger.error("Advisor reply failed", error);
+      send("error", { message: "The advisor is unavailable right now." });
+    }
+  }
+  res.end();
 };
