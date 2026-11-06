@@ -1,6 +1,6 @@
 import type { LetterGrade } from "../../generated/prisma/client.js";
 
-const gradePoints: Record<LetterGrade, number> = {
+export const gradePoints: Record<LetterGrade, number> = {
   A: 4.0,
   A_MINUS: 3.7,
   B_PLUS: 3.3,
