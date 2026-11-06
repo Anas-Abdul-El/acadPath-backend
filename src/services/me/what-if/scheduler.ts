@@ -25,17 +25,15 @@ export const scheduleCourses = (
   for (let index = 0; index < maxSemesters && remaining.length > 0; index++) {
     const term = termAt(index);
     const eligible = remaining
-      .filter((p) => p.earliest <= index)
-      .filter((p) => !p.after || (placedAt.get(p.after) ?? index) < index)
       .filter(
         (p) =>
-          p.course.offeredTerms.length === 0 ||
-          p.course.offeredTerms.includes(term.term),
-      )
-      .filter((p) =>
-        requisiteIds(p.course, CourseRelationType.PREREQUISITE).every((id) =>
-          done.has(id),
-        ),
+          p.earliest <= index &&
+          (!p.after || (placedAt.get(p.after) ?? index) < index) &&
+          (!p.course.offeredTerms.length ||
+            p.course.offeredTerms.includes(term.term)) &&
+          requisiteIds(p.course, CourseRelationType.PREREQUISITE).every((id) =>
+            done.has(id),
+          ),
       )
       .sort(
         (a, b) =>
