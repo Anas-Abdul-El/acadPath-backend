@@ -260,3 +260,26 @@ export type ScenarioResultDto = ScenarioAnalysisDto | UnclearScenarioDto;
 export interface WhatIfOutput {
   data: ScenarioResultDto;
 }
+
+export interface FailedFocusDto {
+  course: CourseSummaryDto;
+  why: string;
+  attempt: TermDto & { grade: LetterGrade | null; retakenIn: TermDto | null };
+  resources: LearningResourceDto[];
+}
+
+export interface DifficultFocusDto {
+  course: CourseSummaryDto;
+  why: string;
+  expectedGrade: LetterGrade;
+  resources: LearningResourceDto[];
+}
+
+export interface RecommendationsDto {
+  failed: FailedFocusDto[];
+  difficult: DifficultFocusDto[];
+}
+
+export interface RecommendationsOutput {
+  data: RecommendationsDto;
+}
