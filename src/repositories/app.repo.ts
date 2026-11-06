@@ -23,6 +23,21 @@ const courseRefSelect = {
   name: true,
 } as const satisfies Prisma.CourseSelect;
 
+const learningResourceSelect = {
+  id: true,
+  title: true,
+  url: true,
+  platform: true,
+  provider: true,
+  format: true,
+  description: true,
+  duration: true,
+  difficulty: true,
+  topics: true,
+  verified: true,
+  courses: { select: courseRefSelect, orderBy: { code: "asc" } },
+} as const satisfies Prisma.LearningResourceSelect;
+
 export const getSummaryProfile = async (userId: string) => {
   return prisma.studentProfile.findUnique({
     where: { userId },
@@ -230,22 +245,17 @@ export const getCourseDetails = async (courseId: string) => {
         orderBy: { course: { code: "asc" } },
       },
       resources: {
-        select: {
-          id: true,
-          title: true,
-          url: true,
-          platform: true,
-          provider: true,
-          format: true,
-          description: true,
-          duration: true,
-          difficulty: true,
-          topics: true,
-          verified: true,
-          courses: { select: courseRefSelect, orderBy: { code: "asc" } },
-        },
+        select: learningResourceSelect,
         orderBy: { title: "asc" },
       },
     },
+  });
+};
+
+export const listCourseResources = async (courseIds: string[]) => {
+  return prisma.learningResource.findMany({
+    where: { courses: { some: { id: { in: courseIds } } } },
+    select: learningResourceSelect,
+    orderBy: [{ verified: "desc" }, { title: "asc" }],
   });
 };
