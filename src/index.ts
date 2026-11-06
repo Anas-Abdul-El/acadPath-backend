@@ -9,7 +9,7 @@ import routers from "./routes/index.js";
 
 const app: Express = express();
 
-// Security iddleware
+// Security Middleware
 app.use(limiter);
 app.use(helmet());
 
