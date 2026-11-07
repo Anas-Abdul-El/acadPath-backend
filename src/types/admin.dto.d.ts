@@ -1,7 +1,16 @@
 import type {
+  CourseSource,
+  DegreeType,
   ProcessingStatus,
   SourceType,
+  StudentDocumentType,
+  YearOfStudy,
 } from "../generated/prisma/enums.js";
+import type {
+  CourseDto,
+  TermDto,
+  UniversitySummaryDto,
+} from "./app.dto.js";
 import type { CatalogStatus, MajorDto, UniversityDto } from "./me.dto.js";
 
 export interface AdminStatsDto {
@@ -76,4 +85,68 @@ export interface AdminMajorsOutput {
 
 export interface AdminMajorOutput {
   data: MajorDto;
+}
+
+export interface AdminMajorRefDto {
+  id: string;
+  name: string;
+  degreeType: DegreeType;
+}
+
+export interface AdminCourseDto extends CourseDto {
+  university: UniversitySummaryDto;
+  major: AdminMajorRefDto;
+  source: CourseSource;
+  updatedAt: string;
+  updatedBy: { id: string; name: string } | null;
+}
+
+export interface AdminCoursesOutput {
+  data: AdminCourseDto[];
+  meta: PageMetaDto;
+}
+
+export interface AdminCourseOutput {
+  data: AdminCourseDto;
+}
+
+export type StudentStage = "PROCESSED" | "UPLOADED" | "NONE";
+
+export interface AdminStudentDto {
+  id: string;
+  name: string;
+  email: string;
+  university: UniversitySummaryDto | null;
+  major: AdminMajorRefDto | null;
+  yearOfStudy: YearOfStudy | null;
+  registeredAt: string;
+  lastActiveAt: string | null;
+  stage: StudentStage;
+  academic: {
+    gpa: number | null;
+    creditsCompleted: number;
+    creditsRequired: number | null;
+    expectedGraduation: TermDto | null;
+  } | null;
+  documents: { transcripts: number };
+}
+
+export interface AdminStudentsOutput {
+  data: AdminStudentDto[];
+  meta: PageMetaDto;
+}
+
+export interface AdminStudentDetailsDto extends AdminStudentDto {
+  onboardingCompletedAt: string | null;
+  documentsList: {
+    id: string;
+    type: StudentDocumentType;
+    fileName: string;
+    status: ProcessingStatus;
+    createdAt: string;
+  }[];
+}
+
+export interface AdminStudentDetailsOutput {
+  data: AdminStudentDetailsDto;
 }
