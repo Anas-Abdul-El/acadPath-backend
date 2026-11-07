@@ -1,5 +1,5 @@
 import type { ProcessingStatus } from "../generated/prisma/enums.js";
-import type { CatalogStatus } from "./me.dto.js";
+import type { CatalogStatus, UniversityDto } from "./me.dto.js";
 
 export interface AdminStatsDto {
   counts: {
@@ -16,4 +16,28 @@ export interface AdminStatsDto {
 
 export interface AdminStatsOutput {
   data: AdminStatsDto;
+}
+
+export interface PageMetaDto {
+  page: number;
+  pageSize: number;
+  total: number;
+}
+
+export interface AdminUniversityDto extends UniversityDto {
+  createdAt: string;
+  updatedAt: string;
+  majorCount: number;
+  courseCount: number;
+  studentCount: number;
+  catalogStatus: CatalogStatus;
+}
+
+export interface AdminUniversitiesOutput {
+  data: AdminUniversityDto[];
+  meta: PageMetaDto;
+}
+
+export interface AdminUniversityOutput {
+  data: AdminUniversityDto;
 }
