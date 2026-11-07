@@ -21,6 +21,9 @@ type FocusCourse = Awaited<ReturnType<typeof appRepo.listFocusCourses>>[number];
 // Grades at or below C+ count as weak.
 const weakGradePoints = gradePoints.C_PLUS;
 
+// How many unlocked courses to name in "Required for ..." before "and N more".
+const maxUnlocksShown = 3;
+
 const isWeak = (grade: LetterGrade | null): grade is LetterGrade =>
   grade !== null && gradePoints[grade] <= weakGradePoints;
 
@@ -103,7 +106,13 @@ export const getRecommendations = async (
   // "Required for ..." when other courses list this one as a prerequisite.
   const unlocksNote = (course: FocusCourse | undefined) => {
     const unlocks = course?.requiredFor.map((r) => r.course) ?? [];
-    return unlocks.length ? `Required for ${codes(unlocks)}.` : null;
+    if (!unlocks.length) return null;
+
+    const shown = codes(unlocks.slice(0, maxUnlocksShown));
+    const more = unlocks.length - maxUnlocksShown;
+    return more > 0
+      ? `Required for ${shown} and ${more} more.`
+      : `Required for ${shown}.`;
   };
 
   // "Builds on ..." for prerequisites the student got a weak grade in.
