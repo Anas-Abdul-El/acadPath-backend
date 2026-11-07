@@ -1,5 +1,10 @@
 import z from "zod";
-import { DegreeType } from "../generated/prisma/enums.js";
+import {
+  CourseCategory,
+  CourseSource,
+  DegreeType,
+  Term,
+} from "../generated/prisma/enums.js";
 import { PLACE_NAME } from "./me.schema.js";
 
 /** adminStatsQuerySchema validates the GET /admin/stats query: months is 1–24 and defaults to 8. */
@@ -150,25 +155,194 @@ export const universityParamsSchema = z.object({
 
 export type UniversityParams = z.infer<typeof universityParamsSchema>;
 
+const majorName = z
+  .string({ error: "Major name is required" })
+  .trim()
+  .min(1, { error: "Major name is required" })
+  .min(2, { error: "Enter the major's full name" })
+  .max(100, { error: "Use 100 characters or fewer" });
+
+const majorDegreeType = z.enum(DegreeType, {
+  error: "Select a valid degree type",
+});
+
+const majorTotalCredits = z
+  .number({ error: "Total credits must be a number" })
+  .int({ error: "Total credits must be a whole number" })
+  .min(1, { error: "Total credits must be at least 1" })
+  .max(300, { error: "Total credits must be at most 300" })
+  .nullable();
+
 /** adminMajorSchema validates the POST /admin/universities/:universityId/majors body. */
 export const adminMajorSchema = z.object({
-  name: z
-    .string({ error: "Major name is required" })
-    .trim()
-    .min(1, { error: "Major name is required" })
-    .min(2, { error: "Enter the major's full name" })
-    .max(100, { error: "Use 100 characters or fewer" }),
-  degreeType: z
-    .enum(DegreeType, { error: "Select a valid degree type" })
-    .default(DegreeType.BACHELOR),
-  totalRequiredCredits: z
-    .number({ error: "Total credits must be a number" })
-    .int({ error: "Total credits must be a whole number" })
-    .min(1, { error: "Total credits must be at least 1" })
-    .max(300, { error: "Total credits must be at most 300" })
-    .nullish()
+  name: majorName,
+  degreeType: majorDegreeType.default(DegreeType.BACHELOR),
+  totalRequiredCredits: majorTotalCredits
+    .optional()
     .transform((credits) => credits ?? null),
 });
 
 /** AdminMajorBody is the validated body: { name, degreeType, totalRequiredCredits }. */
 export type AdminMajorBody = z.infer<typeof adminMajorSchema>;
+
+/** adminMajorUpdateSchema validates the PATCH /admin/majors/:majorId body: any of the POST fields, at least one. */
+export const adminMajorUpdateSchema = z
+  .strictObject({
+    name: majorName.exactOptional(),
+    degreeType: majorDegreeType.exactOptional(),
+    totalRequiredCredits: majorTotalCredits.exactOptional(),
+  })
+  .refine((body) => Object.keys(body).length > 0, {
+    error: "Send at least one field to update",
+  });
+
+/** AdminMajorUpdateBody is the validated body. */
+export type AdminMajorUpdateBody = z.infer<typeof adminMajorUpdateSchema>;
+
+/** majorParamsSchema validates the :majorId route param. */
+export const majorParamsSchema = z.object({
+  majorId: z.uuid({ error: "Invalid major id" }),
+});
+
+export type MajorParams = z.infer<typeof majorParamsSchema>;
+
+const COURSE_CODE = /^[A-Z]{2,5} \d{3,4}[A-Z]?$/;
+
+/** Formats "cs3110", "cs-3110" or "CS  3110" as "CS 3110", like the frontend. */
+const formatCourseCode = (value: string) => {
+  const compact = value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+  const match = compact.match(/^([A-Z]+)(\d+[A-Z]?)$/);
+  return match ? `${match[1]} ${match[2]}` : value.trim().toUpperCase();
+};
+
+const courseCode = z
+  .string({ error: "Enter a course code" })
+  .trim()
+  .min(1, { error: "Enter a course code" })
+  .transform(formatCourseCode)
+  .refine((code) => COURSE_CODE.test(code), {
+    error: "Use a code like CS 3110 or MATH 101",
+  });
+
+const courseName = z
+  .string({ error: "Enter the course name" })
+  .trim()
+  .min(3, { error: "Enter the course name" })
+  .max(100, { error: "Use 100 characters or fewer" });
+
+const courseDescription = z
+  .string({ error: "Write a description" })
+  .trim()
+  .min(20, { error: "Write at least a sentence (20+ characters)" })
+  .max(400, { error: "Keep the description under 400 characters" });
+
+const courseCredits = z
+  .number({ error: "Enter credit hours" })
+  .int({ error: "Use a whole number" })
+  .min(0, { error: "Credits can't be negative" })
+  .max(8, { error: "Courses carry at most 8 credits" });
+
+const courseCategory = z.enum(CourseCategory, {
+  error: "Choose a category",
+});
+
+const offeredTerms = z
+  .array(z.enum(Term, { error: "Choose FALL, SPRING or SUMMER" }), {
+    error: "Send the offered terms as a list",
+  })
+  .transform((terms) => [...new Set(terms)]);
+
+const requisiteCodes = z
+  .array(z.string({ error: "Course codes must be text" }).trim(), {
+    error: "Send course codes as a list",
+  })
+  .transform((codes) => [...new Set(codes.filter(Boolean).map(formatCourseCode))])
+  .superRefine((codes, ctx) => {
+    const invalid = codes.filter((code) => !COURSE_CODE.test(code));
+    if (invalid.length)
+      ctx.addIssue({
+        code: "custom",
+        message: `Check the format of ${invalid.join(", ")}`,
+      });
+  });
+
+/**
+ * adminCourseSchema validates the POST /admin/courses body. Codes are
+ * formatted like "CS 3110"; prerequisites and corequisites are codes of
+ * courses in the same major, checked by the service.
+ */
+export const adminCourseSchema = z.object({
+  majorId: z.uuid({ error: "Choose a major" }),
+  code: courseCode,
+  name: courseName,
+  description: courseDescription,
+  credits: courseCredits,
+  category: courseCategory,
+  offeredTerms: offeredTerms.default([]),
+  prerequisites: requisiteCodes.default([]),
+  corequisites: requisiteCodes.default([]),
+});
+
+/** AdminCourseBody is the validated body. */
+export type AdminCourseBody = z.infer<typeof adminCourseSchema>;
+
+/**
+ * adminCourseUpdateSchema validates the PATCH /admin/courses/:courseId body:
+ * any of the POST fields, at least one. A sent requisite list replaces the old one.
+ */
+export const adminCourseUpdateSchema = z
+  .strictObject({
+    majorId: z.uuid({ error: "Choose a major" }).exactOptional(),
+    code: courseCode.exactOptional(),
+    name: courseName.exactOptional(),
+    description: courseDescription.exactOptional(),
+    credits: courseCredits.exactOptional(),
+    category: courseCategory.exactOptional(),
+    offeredTerms: offeredTerms.exactOptional(),
+    prerequisites: requisiteCodes.exactOptional(),
+    corequisites: requisiteCodes.exactOptional(),
+  })
+  .refine((body) => Object.keys(body).length > 0, {
+    error: "Send at least one field to update",
+  });
+
+/** AdminCourseUpdateBody is the validated body. */
+export type AdminCourseUpdateBody = z.infer<typeof adminCourseUpdateSchema>;
+
+/** adminCoursesQuerySchema validates the GET /admin/courses query. */
+export const adminCoursesQuerySchema = paginationQuerySchema.extend({
+  universityId: z.uuid({ error: "Invalid university id" }).optional(),
+  majorId: z.uuid({ error: "Invalid major id" }).optional(),
+  category: z.enum(CourseCategory, { error: "Invalid category" }).optional(),
+  source: z.enum(CourseSource, { error: "Invalid source" }).optional(),
+});
+
+/** AdminCoursesQuery is the validated query. */
+export type AdminCoursesQuery = z.infer<typeof adminCoursesQuerySchema>;
+
+/** adminCourseParamsSchema validates the :courseId route param. */
+export const adminCourseParamsSchema = z.object({
+  courseId: z.uuid({ error: "Invalid course id" }),
+});
+
+export type AdminCourseParams = z.infer<typeof adminCourseParamsSchema>;
+
+/** adminStudentsQuerySchema validates the GET /admin/students query; q matches name or email. */
+export const adminStudentsQuerySchema = paginationQuerySchema.extend({
+  universityId: z.uuid({ error: "Invalid university id" }).optional(),
+  stage: z
+    .enum(["PROCESSED", "UPLOADED", "NONE"], {
+      error: "Stage must be PROCESSED, UPLOADED or NONE",
+    })
+    .optional(),
+});
+
+/** AdminStudentsQuery is the validated query. */
+export type AdminStudentsQuery = z.infer<typeof adminStudentsQuerySchema>;
+
+/** studentParamsSchema validates the :studentId route param (a User id). */
+export const studentParamsSchema = z.object({
+  studentId: z.uuid({ error: "Invalid student id" }),
+});
+
+export type StudentParams = z.infer<typeof studentParamsSchema>;
