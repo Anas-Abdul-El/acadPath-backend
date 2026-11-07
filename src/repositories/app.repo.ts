@@ -273,6 +273,24 @@ export const listFocusCourses = async (courseIds: string[]) => {
   });
 };
 
+export const saveLearningResources = async (
+  resources: (Omit<Prisma.LearningResourceCreateInput, "courses"> & {
+    courseIds: string[];
+  })[],
+) => {
+  return Promise.all(
+    resources.map(({ courseIds, ...resource }) => {
+      const courses = { connect: courseIds.map((id) => ({ id })) };
+      return prisma.learningResource.upsert({
+        where: { url: resource.url },
+        create: { ...resource, courses },
+        update: { courses },
+        select: { id: true },
+      });
+    }),
+  );
+};
+
 export const listCourseResources = async (courseIds: string[]) => {
   return prisma.learningResource.findMany({
     where: { courses: { some: { id: { in: courseIds } } } },
