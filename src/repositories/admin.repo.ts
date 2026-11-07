@@ -1,6 +1,9 @@
 import { CourseSource, Prisma, UserRole } from "../generated/prisma/client.js";
 import { prisma } from "../libs/prisma.js";
-import type { AdminUniversityBody } from "../schemas/admin.schema.js";
+import type {
+  AdminUniversityBody,
+  AdminUniversityUpdateBody,
+} from "../schemas/admin.schema.js";
 
 const activeStudent = { role: UserRole.STUDENT, isDeleted: false };
 
@@ -84,14 +87,61 @@ export const countCoursesByUniversity = async (universityIds: string[]) => {
   return counts;
 };
 
+export const getAdminUniversityDetails = async (id: string) => {
+  return prisma.university.findUnique({
+    where: { id },
+    select: {
+      ...adminUniversitySelect,
+      majors: {
+        select: {
+          id: true,
+          universityId: true,
+          name: true,
+          degreeType: true,
+          totalRequiredCredits: true,
+          _count: {
+            select: {
+              courses: true,
+              students: { where: { user: { isDeleted: false } } },
+            },
+          },
+        },
+        orderBy: { name: "asc" },
+      },
+      sources: {
+        select: {
+          id: true,
+          title: true,
+          url: true,
+          sourceType: true,
+          errorMessage: true,
+          lastProcessedAt: true,
+          lastFetchedAt: true,
+          createdAt: true,
+        },
+        orderBy: { createdAt: "desc" },
+      },
+    },
+  });
+};
+
+export const findUniversityById = async (id: string) => {
+  return prisma.university.findUnique({
+    where: { id },
+    select: { id: true, name: true, country: true },
+  });
+};
+
 export const findUniversityByNameAndCountry = async (
   name: string,
   country: string,
+  excludeId?: string,
 ) => {
   return prisma.university.findFirst({
     where: {
       name: { equals: name, mode: "insensitive" },
       country: { equals: country, mode: "insensitive" },
+      ...(excludeId && { id: { not: excludeId } }),
     },
     select: { id: true },
   });
@@ -99,4 +149,29 @@ export const findUniversityByNameAndCountry = async (
 
 export const createUniversity = async (data: AdminUniversityBody) => {
   return prisma.university.create({ data, select: { id: true } });
+};
+
+export const updateUniversity = async (
+  id: string,
+  data: AdminUniversityUpdateBody,
+) => {
+  return prisma.university.update({ where: { id }, data, select: { id: true } });
+};
+
+export const countUniversityAcademicRecords = async (universityId: string) => {
+  return prisma.academicRecord.count({
+    where: { course: { major: { universityId } } },
+  });
+};
+
+export const deleteUniversity = async (id: string) => {
+  const usesUniversityCourse = {
+    semesters: {
+      some: { courses: { some: { course: { major: { universityId: id } } } } },
+    },
+  };
+  return prisma.$transaction([
+    prisma.studyPlan.deleteMany({ where: usesUniversityCourse }),
+    prisma.university.delete({ where: { id } }),
+  ]);
 };
