@@ -1,6 +1,7 @@
 import { CourseSource, Prisma, UserRole } from "../generated/prisma/client.js";
 import { prisma } from "../libs/prisma.js";
 import type {
+  AdminMajorBody,
   AdminUniversityBody,
   AdminUniversityUpdateBody,
 } from "../schemas/admin.schema.js";
@@ -87,27 +88,30 @@ export const countCoursesByUniversity = async (universityIds: string[]) => {
   return counts;
 };
 
+const majorSelect = {
+  id: true,
+  universityId: true,
+  name: true,
+  degreeType: true,
+  totalRequiredCredits: true,
+} as const satisfies Prisma.MajorSelect;
+
+const adminMajorSelect = {
+  ...majorSelect,
+  _count: {
+    select: {
+      courses: true,
+      students: { where: { user: { isDeleted: false } } },
+    },
+  },
+} as const satisfies Prisma.MajorSelect;
+
 export const getAdminUniversityDetails = async (id: string) => {
   return prisma.university.findUnique({
     where: { id },
     select: {
       ...adminUniversitySelect,
-      majors: {
-        select: {
-          id: true,
-          universityId: true,
-          name: true,
-          degreeType: true,
-          totalRequiredCredits: true,
-          _count: {
-            select: {
-              courses: true,
-              students: { where: { user: { isDeleted: false } } },
-            },
-          },
-        },
-        orderBy: { name: "asc" },
-      },
+      majors: { select: adminMajorSelect, orderBy: { name: "asc" } },
       sources: {
         select: {
           id: true,
@@ -174,4 +178,29 @@ export const deleteUniversity = async (id: string) => {
     prisma.studyPlan.deleteMany({ where: usesUniversityCourse }),
     prisma.university.delete({ where: { id } }),
   ]);
+};
+
+export const listUniversityMajors = async (universityId: string) => {
+  return prisma.major.findMany({
+    where: { universityId },
+    select: adminMajorSelect,
+    orderBy: { name: "asc" },
+  });
+};
+
+export const findMajorByName = async (universityId: string, name: string) => {
+  return prisma.major.findFirst({
+    where: { universityId, name: { equals: name, mode: "insensitive" } },
+    select: { id: true },
+  });
+};
+
+export const createMajor = async (
+  universityId: string,
+  data: AdminMajorBody,
+) => {
+  return prisma.major.create({
+    data: { ...data, universityId },
+    select: majorSelect,
+  });
 };
