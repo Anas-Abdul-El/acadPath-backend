@@ -5,10 +5,13 @@ import type {
   AdminStatsQuery,
   AdminUniversitiesQuery,
   AdminUniversityBody,
+  AdminUniversityUpdateBody,
+  UniversityParams,
 } from "../schemas/admin.schema.js";
 import type {
   AdminStatsOutput,
   AdminUniversitiesOutput,
+  AdminUniversityDetailsOutput,
   AdminUniversityOutput,
 } from "../types/admin.dto.js";
 
@@ -44,4 +47,37 @@ export const createUniversity = async (
 
   const data = await adminService.createUniversity(req.body);
   res.status(201).send({ data });
+};
+
+export const getUniversity = async (
+  req: Request,
+  res: Response<AdminUniversityDetailsOutput>,
+) => {
+  const authUser = res.locals.user;
+  if (!authUser) throw new AppErr("Missing or malformed access token", 401);
+
+  const { universityId }: UniversityParams = res.locals.params;
+  const data = await adminService.getUniversity(universityId);
+  res.send({ data });
+};
+
+export const updateUniversity = async (
+  req: Request<unknown, unknown, AdminUniversityUpdateBody>,
+  res: Response<AdminUniversityOutput>,
+) => {
+  const authUser = res.locals.user;
+  if (!authUser) throw new AppErr("Missing or malformed access token", 401);
+
+  const { universityId }: UniversityParams = res.locals.params;
+  const data = await adminService.updateUniversity(universityId, req.body);
+  res.send({ data });
+};
+
+export const deleteUniversity = async (req: Request, res: Response) => {
+  const authUser = res.locals.user;
+  if (!authUser) throw new AppErr("Missing or malformed access token", 401);
+
+  const { universityId }: UniversityParams = res.locals.params;
+  await adminService.deleteUniversity(universityId);
+  res.status(204).end();
 };

@@ -3,12 +3,15 @@ import {
   authenticate,
   authorize,
   validateBody,
+  validateParams,
   validateQuery,
 } from "../middlewares/index.js";
 import {
   adminStatsQuerySchema,
   adminUniversitiesQuerySchema,
   adminUniversitySchema,
+  adminUniversityUpdateSchema,
+  universityParamsSchema,
 } from "../schemas/admin.schema.js";
 import catchAsync from "../utils/catchAsync.js";
 import adminController from "../controllers/index.js";
@@ -33,6 +36,25 @@ adminRouter.post(
   "/universities",
   validateBody(adminUniversitySchema),
   catchAsync(adminController.createUniversity),
+);
+
+adminRouter.get(
+  "/universities/:universityId",
+  validateParams(universityParamsSchema),
+  catchAsync(adminController.getUniversity),
+);
+
+adminRouter.patch(
+  "/universities/:universityId",
+  validateParams(universityParamsSchema),
+  validateBody(adminUniversityUpdateSchema),
+  catchAsync(adminController.updateUniversity),
+);
+
+adminRouter.delete(
+  "/universities/:universityId",
+  validateParams(universityParamsSchema),
+  catchAsync(adminController.deleteUniversity),
 );
 
 export default adminRouter;
