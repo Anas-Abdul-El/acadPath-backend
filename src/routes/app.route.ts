@@ -11,9 +11,11 @@ import {
   advisorChatSchema,
   courseParamsSchema,
   generateStudyPlanSchema,
+  planCourseParamsSchema,
   quizSchema,
   resourceSearchSchema,
   studentCoursesQuerySchema,
+  updatePlanCourseSchema,
   whatIfSchema,
 } from "../schemas/app.schema.js";
 import { aiLimiter } from "../config/limiter.js";
@@ -62,6 +64,15 @@ appRouter.post(
   aiLimiter,
   validateBody(generateStudyPlanSchema),
   catchAsync(appController.generateStudyPlan),
+);
+
+appRouter.patch(
+  "/study-plan/courses/:planCourseId",
+  authenticate,
+  authorize("STUDENT"),
+  validateParams(planCourseParamsSchema),
+  validateBody(updatePlanCourseSchema),
+  catchAsync(appController.updatePlanCourse),
 );
 
 appRouter.post(
