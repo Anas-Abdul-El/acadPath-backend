@@ -333,3 +333,31 @@ export const listCourseResources = async (courseIds: string[]) => {
     orderBy: [{ verified: "desc" }, { title: "asc" }],
   });
 };
+
+const quizCourseSelect = {
+  code: true,
+  name: true,
+  description: true,
+} as const satisfies Prisma.CourseSelect;
+
+export const getQuizResource = async (resourceId: string) => {
+  return prisma.learningResource.findUnique({
+    where: { id: resourceId },
+    select: {
+      title: true,
+      platform: true,
+      provider: true,
+      description: true,
+      difficulty: true,
+      topics: true,
+      courses: { select: quizCourseSelect, orderBy: { code: "asc" } },
+    },
+  });
+};
+
+export const getQuizCourse = async (courseId: string) => {
+  return prisma.course.findUnique({
+    where: { id: courseId },
+    select: quizCourseSelect,
+  });
+};
