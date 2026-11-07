@@ -16,6 +16,7 @@ import {
   studentCoursesQuerySchema,
   whatIfSchema,
 } from "../schemas/app.schema.js";
+import { aiLimiter } from "../config/limiter.js";
 import catchAsync from "../utils/catchAsync";
 import appController from "../controllers";
 
@@ -58,6 +59,7 @@ appRouter.post(
   "/study-plan/generate",
   authenticate,
   authorize("STUDENT"),
+  aiLimiter,
   validateBody(generateStudyPlanSchema),
   catchAsync(appController.generateStudyPlan),
 );
@@ -66,6 +68,7 @@ appRouter.post(
   "/what-if",
   authenticate,
   authorize("STUDENT"),
+  aiLimiter,
   validateBody(whatIfSchema),
   catchAsync(appController.analyzeWhatIf),
 );
@@ -81,6 +84,7 @@ appRouter.post(
   "/advisor/chat",
   authenticate,
   authorize("STUDENT"),
+  aiLimiter,
   validateBody(advisorChatSchema),
   catchAsync(appController.advisorChat),
 );
@@ -96,6 +100,7 @@ resourceRouter.post(
   "/search",
   authenticate,
   authorize("STUDENT"),
+  aiLimiter,
   validateBody(resourceSearchSchema),
   catchAsync(appController.searchResources),
 );
@@ -104,6 +109,7 @@ quizRouter.post(
   "/",
   authenticate,
   authorize("STUDENT"),
+  aiLimiter,
   validateBody(quizSchema),
   catchAsync(appController.generateQuiz),
 );
