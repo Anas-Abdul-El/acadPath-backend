@@ -1,8 +1,12 @@
-import { ResourcePlatform } from "../../../generated/prisma/client.js";
 import { RESOURCE_DISCOVERY_PROMPT } from "../../../libs/prompt.js";
 import * as appRepo from "../../../repositories/app.repo.js";
 import { learningResourcesDataSchema } from "../../../schemas/app.schema.js";
-import { askAiForJson, normalizeCode } from "../../shared/index.js";
+import {
+  askAiForJson,
+  linkWorks,
+  normalizeCode,
+  platformOf,
+} from "../../shared/index.js";
 
 interface ResourceCourse {
   id: string;
@@ -12,38 +16,6 @@ interface ResourceCourse {
 }
 
 type Candidate = Parameters<typeof appRepo.saveLearningResources>[0][number];
-
-const platformHosts: Record<ResourcePlatform, string[]> = {
-  YOUTUBE: ["youtube.com", "youtu.be"],
-  UDEMY: ["udemy.com"],
-  COURSERA: ["coursera.org"],
-};
-
-// The platform comes from the URL's host, not from what the AI claims.
-const platformOf = (url: string) => {
-  const host = new URL(url).hostname;
-  const match = Object.entries(platformHosts).find(([, hosts]) =>
-    hosts.some((h) => host === h || host.endsWith(`.${h}`)),
-  );
-  return match ? (match[0] as ResourcePlatform) : null;
-};
-
-// YouTube's oEmbed returns an error for videos and playlists that don't exist.
-// Udemy and Coursera often block bots, so only a 404 or 410 counts as broken there.
-const linkWorks = async (url: string, platform: ResourcePlatform) => {
-  const target =
-    platform === ResourcePlatform.YOUTUBE
-      ? `https://www.youtube.com/oembed?format=json&url=${encodeURIComponent(url)}`
-      : url;
-  try {
-    const res = await fetch(target, { signal: AbortSignal.timeout(8000) });
-    return platform === ResourcePlatform.YOUTUBE
-      ? res.ok
-      : res.status !== 404 && res.status !== 410;
-  } catch {
-    return false;
-  }
-};
 
 // Courses already sent to the AI since the server started, so a course with
 // no good results doesn't trigger a new search on every request.
