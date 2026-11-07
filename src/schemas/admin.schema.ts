@@ -51,56 +51,100 @@ export const adminUniversitiesQuerySchema = paginationQuerySchema.extend({
 /** AdminUniversitiesQuery is the validated query: { page, pageSize, q?, country?, catalogStatus? }. */
 export type AdminUniversitiesQuery = z.infer<typeof adminUniversitiesQuerySchema>;
 
-const optionalText = (schema: z.ZodString) =>
+const universityName = z
+  .string({ error: "University name is required" })
+  .trim()
+  .min(1, { error: "University name is required" })
+  .min(3, { error: "Enter the university's full name" })
+  .max(120, { error: "Use 120 characters or fewer" });
+
+const universityCountry = z
+  .string({ error: "Country is required" })
+  .trim()
+  .min(1, { error: "Country is required" })
+  .min(2, { error: "Enter the full country name" })
+  .max(60, { error: "Use 60 characters or fewer" })
+  .regex(PLACE_NAME, { error: "Use letters only" });
+
+const universityCity = z
+  .string({ error: "City is required" })
+  .trim()
+  .min(1, { error: "City is required" })
+  .max(80, { error: "Use 80 characters or fewer" })
+  .regex(PLACE_NAME, { error: "Use letters only" });
+
+const universityShortName = z
+  .string()
+  .trim()
+  .max(12, { error: "Use 12 characters or fewer" });
+
+const universityWebsite = z
+  .string()
+  .trim()
+  .refine(
+    (value) =>
+      value === "" || z.url({ protocol: /^https?$/ }).safeParse(value).success,
+    { error: "Enter a full address starting with https://" },
+  );
+
+const universityCatalogYear = z
+  .string()
+  .trim()
+  .refine((value) => value === "" || /^\d{4}[–-]\d{2}$/.test(value), {
+    error: "Use the format 2025–26",
+  });
+
+const optionalText = (schema: z.ZodType<string>) =>
   schema.nullish().transform((value) => value || null);
+
+const clearableText = (schema: z.ZodType<string>) =>
+  schema
+    .nullable()
+    .transform((value) => value || null)
+    .exactOptional();
 
 /**
  * adminUniversitySchema validates the POST /admin/universities body. Every
  * field is trimmed and an empty or missing optional field is stored as null.
  */
 export const adminUniversitySchema = z.object({
-  name: z
-    .string({ error: "University name is required" })
-    .trim()
-    .min(1, { error: "University name is required" })
-    .min(3, { error: "Enter the university's full name" })
-    .max(120, { error: "Use 120 characters or fewer" }),
-  shortName: optionalText(
-    z.string().trim().max(12, { error: "Use 12 characters or fewer" }),
-  ),
-  country: z
-    .string({ error: "Country is required" })
-    .trim()
-    .min(1, { error: "Country is required" })
-    .min(2, { error: "Enter the full country name" })
-    .max(60, { error: "Use 60 characters or fewer" })
-    .regex(PLACE_NAME, { error: "Use letters only" }),
-  city: z
-    .string({ error: "City is required" })
-    .trim()
-    .min(1, { error: "City is required" })
-    .max(80, { error: "Use 80 characters or fewer" })
-    .regex(PLACE_NAME, { error: "Use letters only" }),
-  website: optionalText(
-    z
-      .string()
-      .trim()
-      .refine(
-        (value) =>
-          value === "" ||
-          z.url({ protocol: /^https?$/ }).safeParse(value).success,
-        { error: "Enter a full address starting with https://" },
-      ),
-  ),
-  catalogYear: optionalText(
-    z
-      .string()
-      .trim()
-      .refine((value) => value === "" || /^\d{4}[–-]\d{2}$/.test(value), {
-        error: "Use the format 2025–26",
-      }),
-  ),
+  name: universityName,
+  shortName: optionalText(universityShortName),
+  country: universityCountry,
+  city: universityCity,
+  website: optionalText(universityWebsite),
+  catalogYear: optionalText(universityCatalogYear),
 });
 
 /** AdminUniversityBody is the validated body. */
 export type AdminUniversityBody = z.infer<typeof adminUniversitySchema>;
+
+/**
+ * adminUniversityUpdateSchema validates the PATCH /admin/universities/:universityId
+ * body: any of the POST fields, at least one. Omitted fields stay unchanged,
+ * and null or "" clears an optional field. Unknown fields are rejected.
+ */
+export const adminUniversityUpdateSchema = z
+  .strictObject({
+    name: universityName.exactOptional(),
+    shortName: clearableText(universityShortName),
+    country: universityCountry.exactOptional(),
+    city: universityCity.exactOptional(),
+    website: clearableText(universityWebsite),
+    catalogYear: clearableText(universityCatalogYear),
+  })
+  .refine((body) => Object.keys(body).length > 0, {
+    error: "Send at least one field to update",
+  });
+
+/** AdminUniversityUpdateBody is the validated body. */
+export type AdminUniversityUpdateBody = z.infer<
+  typeof adminUniversityUpdateSchema
+>;
+
+/** universityParamsSchema validates the :universityId route param. */
+export const universityParamsSchema = z.object({
+  universityId: z.uuid({ error: "Invalid university id" }),
+});
+
+export type UniversityParams = z.infer<typeof universityParamsSchema>;
