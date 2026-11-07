@@ -66,6 +66,13 @@ appRouter.post(
   catchAsync(appController.analyzeWhatIf),
 );
 
+appRouter.get(
+  "/recommendations",
+  authenticate,
+  authorize("STUDENT"),
+  catchAsync(appController.getRecommendations),
+);
+
 appRouter.post(
   "/advisor/chat",
   authenticate,
