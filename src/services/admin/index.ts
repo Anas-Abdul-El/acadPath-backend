@@ -6,3 +6,5 @@ export * from "./get-university.service.js";
 export * from "./update-university.service.js";
 export * from "./create-major.service.js";
 export * from "./list-majors.service.js";
+export * from "./delete-major.service.js";
+export * from "./update-major.service.js";
