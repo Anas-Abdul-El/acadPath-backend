@@ -170,6 +170,16 @@ export const uploadDocumentsBodySchema = z.object({
 /** UploadDocumentsBody is the validated body: { type }. */
 export type UploadDocumentsBody = z.infer<typeof uploadDocumentsBodySchema>;
 
+/** documentsQuerySchema validates the GET /me/documents query: an optional type filter. */
+export const documentsQuerySchema = z.object({
+  type: z
+    .enum(StudentDocumentType, { error: "Select a valid document type" })
+    .optional(),
+});
+
+/** DocumentsQuery is the validated query: { type? }. */
+export type DocumentsQuery = z.infer<typeof documentsQuerySchema>;
+
 /** transcriptDataSchema validates the transcript extraction AI's reply. */
 export const transcriptDataSchema = z.object({
   records: z.array(

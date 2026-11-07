@@ -196,9 +196,12 @@ const documentSelect = {
   createdAt: true,
 } as const satisfies Prisma.StudentDocumentSelect;
 
-export const listDocuments = async (userId: string) => {
+export const listDocuments = async (
+  userId: string,
+  type?: StudentDocumentType,
+) => {
   return prisma.studentDocument.findMany({
-    where: { student: { userId } },
+    where: { student: { userId }, ...(type && { type }) },
     select: documentSelect,
     orderBy: { createdAt: "desc" },
   });

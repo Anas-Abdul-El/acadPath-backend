@@ -2,6 +2,7 @@ import type { Request, Response } from "express";
 import AppErr from "../libs/appErr.js";
 import * as meService from "../services/me/index.js";
 import type {
+  DocumentsQuery,
   SelectUniversityBody,
   UpdateProfileBody,
   UploadDocumentsBody,
@@ -100,7 +101,8 @@ export const listDocuments = async (
   const authUser = res.locals.user;
   if (!authUser) throw new AppErr("Missing or malformed access token", 401);
 
-  const data = await meService.listDocuments(authUser.id);
+  const query: DocumentsQuery = res.locals.query;
+  const data = await meService.listDocuments(authUser.id, query);
 
   res.send({ data });
 };

@@ -5,8 +5,10 @@ import {
   upload,
   validateBody,
   validateFiles,
+  validateQuery,
 } from "../middlewares";
 import {
+  documentsQuerySchema,
   selectUniversitySchema,
   updateProfileSchema,
   uploadDocumentsBodySchema,
@@ -47,6 +49,7 @@ meRouter.get(
   "/documents",
   authenticate,
   authorize("STUDENT"),
+  validateQuery(documentsQuerySchema),
   catchAsync(meController.listDocuments),
 );
 

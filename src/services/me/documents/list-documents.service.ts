@@ -1,4 +1,5 @@
 import * as meRepo from "../../../repositories/me.repo.js";
+import type { DocumentsQuery } from "../../../schemas/me.schema.js";
 import type { StudentDocumentDto } from "../../../types/me.dto.js";
 
 export const toDocumentDto = (
@@ -11,7 +12,8 @@ export const toDocumentDto = (
 
 export const listDocuments = async (
   userId: string,
+  { type }: DocumentsQuery,
 ): Promise<StudentDocumentDto[]> => {
-  const documents = await meRepo.listDocuments(userId);
+  const documents = await meRepo.listDocuments(userId, type);
   return documents.map(toDocumentDto);
 };
