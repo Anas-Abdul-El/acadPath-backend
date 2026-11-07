@@ -252,6 +252,27 @@ export const getCourseDetails = async (courseId: string) => {
   });
 };
 
+export const listFocusCourses = async (courseIds: string[]) => {
+  return prisma.course.findMany({
+    where: { id: { in: courseIds } },
+    select: {
+      ...courseSummarySelect,
+      description: true,
+      requisites: {
+        where: { relationType: CourseRelationType.PREREQUISITE },
+        select: { requiredCourse: { select: courseRefSelect } },
+        orderBy: { requiredCourse: { code: "asc" } },
+      },
+      requiredFor: {
+        where: { relationType: CourseRelationType.PREREQUISITE },
+        select: { course: { select: courseRefSelect } },
+        orderBy: { course: { code: "asc" } },
+      },
+    },
+    orderBy: { code: "asc" },
+  });
+};
+
 export const listCourseResources = async (courseIds: string[]) => {
   return prisma.learningResource.findMany({
     where: { courses: { some: { id: { in: courseIds } } } },
