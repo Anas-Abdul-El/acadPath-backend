@@ -9,6 +9,8 @@ export * from "./list-majors.service.js";
 export * from "./create-course.service.js";
 export * from "./delete-course.service.js";
 export * from "./delete-major.service.js";
+export * from "./get-student.service.js";
 export * from "./list-courses.service.js";
+export * from "./list-students.service.js";
 export * from "./update-course.service.js";
 export * from "./update-major.service.js";
