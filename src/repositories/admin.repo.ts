@@ -1,7 +1,14 @@
-import { CourseSource, Prisma, UserRole } from "../generated/prisma/client.js";
+import {
+  CourseSource,
+  Prisma,
+  UserRole,
+  type CourseRelationType,
+} from "../generated/prisma/client.js";
 import { prisma } from "../libs/prisma.js";
 import type {
+  AdminCourseBody,
   AdminMajorBody,
+  AdminMajorUpdateBody,
   AdminUniversityBody,
   AdminUniversityUpdateBody,
 } from "../schemas/admin.schema.js";
@@ -188,9 +195,17 @@ export const listUniversityMajors = async (universityId: string) => {
   });
 };
 
-export const findMajorByName = async (universityId: string, name: string) => {
+export const findMajorByName = async (
+  universityId: string,
+  name: string,
+  excludeId?: string,
+) => {
   return prisma.major.findFirst({
-    where: { universityId, name: { equals: name, mode: "insensitive" } },
+    where: {
+      universityId,
+      name: { equals: name, mode: "insensitive" },
+      ...(excludeId && { id: { not: excludeId } }),
+    },
     select: { id: true },
   });
 };
@@ -202,5 +217,266 @@ export const createMajor = async (
   return prisma.major.create({
     data: { ...data, universityId },
     select: majorSelect,
+  });
+};
+
+export const findMajorById = async (id: string) => {
+  return prisma.major.findUnique({
+    where: { id },
+    select: { id: true, universityId: true, name: true },
+  });
+};
+
+export const updateMajor = async (id: string, data: AdminMajorUpdateBody) => {
+  return prisma.major.update({ where: { id }, data, select: majorSelect });
+};
+
+export const countMajorAcademicRecords = async (majorId: string) => {
+  return prisma.academicRecord.count({ where: { course: { majorId } } });
+};
+
+export const deleteMajor = async (id: string) => {
+  const usesMajorCourse = {
+    semesters: {
+      some: { courses: { some: { course: { majorId: id } } } },
+    },
+  };
+  return prisma.$transaction([
+    prisma.studyPlan.deleteMany({ where: usesMajorCourse }),
+    prisma.major.delete({ where: { id } }),
+  ]);
+};
+
+// ─── Courses ─────────────────────────────────────────────
+
+const adminCourseSelect = {
+  id: true,
+  code: true,
+  name: true,
+  credits: true,
+  category: true,
+  majorId: true,
+  description: true,
+  offeredTerms: true,
+  source: true,
+  updatedAt: true,
+  requisites: {
+    select: {
+      relationType: true,
+      requiredCourse: { select: { id: true, code: true, name: true } },
+    },
+    orderBy: { requiredCourse: { code: "asc" } },
+  },
+  major: {
+    select: {
+      id: true,
+      name: true,
+      degreeType: true,
+      university: { select: { id: true, name: true, shortName: true } },
+    },
+  },
+  updatedBy: { select: { id: true, name: true } },
+} as const satisfies Prisma.CourseSelect;
+
+export interface CourseRequisite {
+  requiredCourseId: string;
+  relationType: CourseRelationType;
+}
+
+export const listAdminCourses = async (
+  where: Prisma.CourseWhereInput,
+  skip: number,
+  take: number,
+) => {
+  return prisma.$transaction([
+    prisma.course.findMany({
+      where,
+      select: adminCourseSelect,
+      orderBy: [{ code: "asc" }, { id: "asc" }],
+      skip,
+      take,
+    }),
+    prisma.course.count({ where }),
+  ]);
+};
+
+export const getAdminCourse = async (id: string) => {
+  return prisma.course.findUniqueOrThrow({
+    where: { id },
+    select: adminCourseSelect,
+  });
+};
+
+export const findCourseById = async (id: string) => {
+  return prisma.course.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      majorId: true,
+      code: true,
+      requisites: {
+        select: { relationType: true, requiredCourse: { select: { code: true } } },
+      },
+    },
+  });
+};
+
+export const listMajorCourseCodes = async (majorId: string) => {
+  return prisma.course.findMany({
+    where: { majorId },
+    select: { id: true, code: true },
+  });
+};
+
+export const createCourse = async (
+  fields: Omit<AdminCourseBody, "prerequisites" | "corequisites">,
+  updatedById: string,
+  requisites: CourseRequisite[],
+) => {
+  return prisma.course.create({
+    data: {
+      ...fields,
+      source: CourseSource.ADMIN,
+      updatedById,
+      requisites: { create: requisites },
+    },
+    select: { id: true },
+  });
+};
+
+/**
+ * Updates a course. A requisites list replaces all its requisites. When the
+ * course moves to another major, links from courses in its old major are removed.
+ */
+export const updateCourse = async (
+  id: string,
+  data: Prisma.CourseUncheckedUpdateInput,
+  requisites: CourseRequisite[] | null,
+  movedToMajorId: string | null,
+) => {
+  return prisma.$transaction([
+    ...(requisites
+      ? [
+          prisma.coursePrerequisite.deleteMany({ where: { courseId: id } }),
+          prisma.coursePrerequisite.createMany({
+            data: requisites.map((r) => ({ ...r, courseId: id })),
+          }),
+        ]
+      : []),
+    ...(movedToMajorId
+      ? [
+          prisma.coursePrerequisite.deleteMany({
+            where: {
+              requiredCourseId: id,
+              course: { majorId: { not: movedToMajorId } },
+            },
+          }),
+        ]
+      : []),
+    prisma.course.update({ where: { id }, data, select: { id: true } }),
+  ]);
+};
+
+export const countCourseUsage = async (courseId: string) => {
+  const [records, plans] = await Promise.all([
+    prisma.academicRecord.count({ where: { courseId } }),
+    prisma.studyPlanCourse.count({ where: { courseId } }),
+  ]);
+  return records + plans;
+};
+
+export const deleteCourse = async (id: string) => {
+  return prisma.course.delete({ where: { id }, select: { id: true } });
+};
+
+// ─── Students ────────────────────────────────────────────
+
+const adminStudentSelect = {
+  id: true,
+  name: true,
+  email: true,
+  createdAt: true,
+  sessions: {
+    select: { lastUsedAt: true },
+    orderBy: { lastUsedAt: "desc" },
+    take: 1,
+  },
+  studentProfile: {
+    select: {
+      id: true,
+      yearOfStudy: true,
+      onboardingCompletedAt: true,
+      university: { select: { id: true, name: true, shortName: true } },
+      major: {
+        select: {
+          id: true,
+          name: true,
+          degreeType: true,
+          totalRequiredCredits: true,
+        },
+      },
+      _count: { select: { academicRecords: true, documents: true } },
+      documents: {
+        select: {
+          id: true,
+          type: true,
+          fileName: true,
+          status: true,
+          createdAt: true,
+        },
+        orderBy: { createdAt: "desc" },
+      },
+    },
+  },
+} as const satisfies Prisma.UserSelect;
+
+export const studentWhere = (where: Prisma.UserWhereInput) => ({
+  AND: [activeStudent, where],
+});
+
+export const listAdminStudents = async (
+  where: Prisma.UserWhereInput,
+  skip: number,
+  take: number,
+) => {
+  return prisma.$transaction([
+    prisma.user.findMany({
+      where: studentWhere(where),
+      select: adminStudentSelect,
+      orderBy: [{ createdAt: "desc" }, { id: "asc" }],
+      skip,
+      take,
+    }),
+    prisma.user.count({ where: studentWhere(where) }),
+  ]);
+};
+
+export const getAdminStudent = async (id: string) => {
+  return prisma.user.findFirst({
+    where: studentWhere({ id }),
+    select: adminStudentSelect,
+  });
+};
+
+export const listStudentRecordSummaries = async (profileIds: string[]) => {
+  return prisma.academicRecord.findMany({
+    where: { studentId: { in: profileIds } },
+    select: {
+      studentId: true,
+      status: true,
+      grade: true,
+      course: { select: { credits: true } },
+    },
+  });
+};
+
+export const listStudentPlanTerms = async (profileIds: string[]) => {
+  return prisma.studyPlan.findMany({
+    where: { studentId: { in: profileIds } },
+    select: {
+      studentId: true,
+      semesters: { select: { term: true, year: true } },
+    },
+    orderBy: { createdAt: "desc" },
   });
 };
