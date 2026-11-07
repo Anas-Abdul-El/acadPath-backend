@@ -2,6 +2,7 @@ import type { Request, Response } from "express";
 import AppErr from "../libs/appErr.js";
 import * as adminService from "../services/admin/index.js";
 import type {
+  AdminMajorBody,
   AdminStatsQuery,
   AdminUniversitiesQuery,
   AdminUniversityBody,
@@ -9,6 +10,8 @@ import type {
   UniversityParams,
 } from "../schemas/admin.schema.js";
 import type {
+  AdminMajorOutput,
+  AdminMajorsOutput,
   AdminStatsOutput,
   AdminUniversitiesOutput,
   AdminUniversityDetailsOutput,
@@ -80,4 +83,28 @@ export const deleteUniversity = async (req: Request, res: Response) => {
   const { universityId }: UniversityParams = res.locals.params;
   await adminService.deleteUniversity(universityId);
   res.status(204).end();
+};
+
+export const listMajors = async (
+  req: Request,
+  res: Response<AdminMajorsOutput>,
+) => {
+  const authUser = res.locals.user;
+  if (!authUser) throw new AppErr("Missing or malformed access token", 401);
+
+  const { universityId }: UniversityParams = res.locals.params;
+  const data = await adminService.listMajors(universityId);
+  res.send({ data });
+};
+
+export const createMajor = async (
+  req: Request<unknown, unknown, AdminMajorBody>,
+  res: Response<AdminMajorOutput>,
+) => {
+  const authUser = res.locals.user;
+  if (!authUser) throw new AppErr("Missing or malformed access token", 401);
+
+  const { universityId }: UniversityParams = res.locals.params;
+  const data = await adminService.createMajor(universityId, req.body);
+  res.status(201).send({ data });
 };
