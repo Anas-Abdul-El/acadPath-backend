@@ -10,9 +10,11 @@ import type {
   AdvisorChatBody,
   CourseParams,
   GenerateStudyPlanBody,
+  PlanCourseParams,
   QuizBody,
   ResourceSearchBody,
   StudentCoursesQuery,
+  UpdatePlanCourseBody,
   WhatIfBody,
 } from "../schemas/app.schema.js";
 import type {
@@ -23,6 +25,7 @@ import type {
   RecommendationsOutput,
   ResourceSearchOutput,
   StudentCoursesOutput,
+  StudyPlanCourseOutput,
   StudyPlanOutput,
   WhatIfOutput,
 } from "../types/app.dto.js";
@@ -104,6 +107,22 @@ export const generateStudyPlan = async (
   const data = await meService.generateStudyPlan(authUser.id, req.body);
 
   res.status(201).send({ data });
+};
+
+export const updatePlanCourse = async (
+  req: Request<unknown, unknown, UpdatePlanCourseBody>,
+  res: Response<StudyPlanCourseOutput>,
+) => {
+  const authUser = res.locals.user;
+  if (!authUser) throw new AppErr("Missing or malformed access token", 401);
+
+  const { planCourseId }: PlanCourseParams = res.locals.params;
+  const data = await meService.updatePlanCourse(
+    authUser.id,
+    planCourseId,
+    req.body,
+  );
+  res.send({ data });
 };
 
 export const analyzeWhatIf = async (
