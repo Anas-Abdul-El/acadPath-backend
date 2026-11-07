@@ -69,3 +69,11 @@ export interface AdminUniversityDetailsDto extends AdminUniversityDto {
 export interface AdminUniversityDetailsOutput {
   data: AdminUniversityDetailsDto;
 }
+
+export interface AdminMajorsOutput {
+  data: AdminMajorDto[];
+}
+
+export interface AdminMajorOutput {
+  data: MajorDto;
+}
