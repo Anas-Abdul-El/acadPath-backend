@@ -1,0 +1,202 @@
+{
+  "courses": [
+    {
+      "code": "CSCI200",
+      "name": "Introduction to Programming",
+      "description": "This course introduces fundamental programming concepts using a high-level language. Topics include variables, data types, control structures, functions, arrays, and basic input/output. Students will learn problem-solving techniques and develop basic programming skills through hands-on labs and assignments.",
+      "credits": 3,
+      "prerequisites": [],
+      "category": "Major Requirement",
+      "sourceUrl": "https://liu.edu.lb/metaData/CSCI-DES.pdf"
+    },
+    {
+      "code": "CSCI201",
+      "name": "Object-Oriented Programming",
+      "description": "This course covers object-oriented programming principles including encapsulation, inheritance, polymorphism, and abstraction. Students will learn to design and implement classes, work with interfaces, exception handling, and file I/O. Emphasis on software design patterns and best practices.",
+      "credits": 3,
+      "prerequisites": ["CSCI200"],
+      "category": "Major Requirement",
+      "sourceUrl": "https://liu.edu.lb/metaData/CSCI-DES.pdf"
+    },
+    {
+      "code": "CSCI210",
+      "name": "Data Structures and Algorithms",
+      "description": "Fundamental data structures including arrays, linked lists, stacks, queues, trees, graphs, and hash tables. Algorithm analysis using Big-O notation. Sorting and searching algorithms. Recursion and dynamic programming. Students implement data structures and analyze algorithm efficiency.",
+      "credits": 3,
+      "prerequisites": ["CSCI201"],
+      "category": "Major Requirement",
+      "sourceUrl": "https://liu.edu.lb/metaData/CSCI-DES.pdf"
+    },
+    {
+      "code": "CSCI220",
+      "name": "Discrete Mathematics for Computer Science",
+      "description": "Mathematical foundations for computer science including logic, set theory, functions, relations, proof techniques, combinatorics, graph theory, and discrete probability. Applications to algorithms, cryptography, and computer science theory.",
+      "credits": 3,
+      "prerequisites": [],
+      "category": "Major Requirement",
+      "sourceUrl": "https://liu.edu.lb/metaData/CSCI-DES.pdf"
+    },
+    {
+      "code": "CSCI230",
+      "name": "Computer Organization and Architecture",
+      "description": "Computer system organization including CPU architecture, memory hierarchy, instruction sets, addressing modes, pipelining, and parallel processing. Assembly language programming. Performance evaluation and benchmarks.",
+      "credits": 3,
+      "prerequisites": ["CSCI200"],
+      "category": "Major Requirement",
+      "sourceUrl": "https://liu.edu.lb/metaData/CSCI-DES.pdf"
+    },
+    {
+      "code": "CSCI300",
+      "name": "Operating Systems",
+      "description": "Operating system concepts including process management, scheduling, synchronization, deadlocks, memory management, file systems, and I/O systems. Case studies of modern operating systems. Students implement OS components in projects.",
+      "credits": 3,
+      "prerequisites": ["CSCI210", "CSCI230"],
+      "category": "Major Requirement",
+      "sourceUrl": "https://liu.edu.lb/metaData/CSCI-DES.pdf"
+    },
+    {
+      "code": "CSCI310",
+      "name": "Database Systems",
+      "description": "Database design and management including ER modeling, relational model, SQL, normalization, transaction processing, concurrency control, recovery, and database security. Introduction to NoSQL and distributed databases. Practical database design projects.",
+      "credits": 3,
+      "prerequisites": ["CSCI210"],
+      "category": "Major Requirement",
+      "sourceUrl": "https://liu.edu.lb/metaData/CSCI-DES.pdf"
+    },
+    {
+      "code": "CSCI320",
+      "name": "Software Engineering",
+      "description": "Software development life cycle, requirements engineering, design patterns, testing strategies, version control, project management, and agile methodologies. Team-based software project applying engineering principles.",
+      "credits": 3,
+      "prerequisites": ["CSCI201"],
+      "category": "Major Requirement",
+      "sourceUrl": "https://liu.edu.lb/metaData/CSCI-DES.pdf"
+    },
+    {
+      "code": "CSCI330",
+      "name": "Computer Networks",
+      "description": "Network architectures, protocols, and standards. OSI and TCP/IP models. Physical, data link, network, transport, and application layers. Routing, switching, wireless networks, network security, and socket programming.",
+      "credits": 3,
+      "prerequisites": ["CSCI210"],
+      "category": "Major Requirement",
+      "sourceUrl": "https://liu.edu.lb/metaData/CSCI-DES.pdf"
+    },
+    {
+      "code": "CSCI340",
+      "name": "Theory of Computation",
+      "description": "Automata theory, formal languages, and computability. Finite automata, regular expressions, context-free grammars, pushdown automata, Turing machines, decidability, and complexity classes (P, NP, NP-complete).",
+      "credits": 3,
+      "prerequisites": ["CSCI220"],
+      "category": "Major Requirement",
+      "sourceUrl": "https://liu.edu.lb/metaData/CSCI-DES.pdf"
+    },
+    {
+      "code": "CSCI400",
+      "name": "Artificial Intelligence",
+      "description": "Fundamental AI concepts including search algorithms, knowledge representation, reasoning, machine learning basics, neural networks, natural language processing, and AI ethics. Practical implementations of AI techniques.",
+      "credits": 3,
+      "prerequisites": ["CSCI210", "CSCI220"],
+      "category": "Major Requirement",
+      "sourceUrl": "https://liu.edu.lb/metaData/CSCI-DES.pdf"
+    },
+    {
+      "code": "CSCI410",
+      "name": "Compiler Design",
+      "description": "Compiler structure, lexical analysis, parsing techniques (top-down, bottom-up), syntax-directed translation, intermediate code generation, code optimization, and code generation. Students build a compiler for a subset of a programming language.",
+      "credits": 3,
+      "prerequisites": ["CSCI210", "CSCI340"],
+      "category": "Major Elective",
+      "sourceUrl": "https://liu.edu.lb/metaData/CSCI-DES.pdf"
+    },
+    {
+      "code": "CSCI420",
+      "name": "Computer Graphics",
+      "description": "Graphics hardware, 2D/3D transformations, viewing, clipping, rendering pipelines, shading models, texture mapping, ray tracing, and animation. OpenGL programming. Mathematical foundations for computer graphics.",
+      "credits": 3,
+      "prerequisites": ["CSCI210"],
+      "category": "Major Elective",
+      "sourceUrl": "https://liu.edu.lb/metaData/CSCI-DES.pdf"
+    },
+    {
+      "code": "CSCI430",
+      "name": "Web Programming",
+      "description": "Web technologies including HTML5, CSS3, JavaScript, front-end frameworks (React/Vue), back-end development (Node.js, databases), RESTful APIs, authentication, deployment, and web security. Full-stack web application development.",
+      "credits": 3,
+      "prerequisites": ["CSCI201", "CSCI310"],
+      "category": "Major Elective",
+      "sourceUrl": "https://liu.edu.lb/metaData/CSCI-DES.pdf"
+    },
+    {
+      "code": "CSCI440",
+      "name": "Mobile Application Development",
+      "description": "Mobile app development for iOS and Android platforms. Native development (Swift/Kotlin), cross-platform frameworks (Flutter/React Native), UI/UX design, mobile databases, sensors, location services, and app deployment.",
+      "credits": 3,
+      "prerequisites": ["CSCI201"],
+      "category": "Major Elective",
+      "sourceUrl": "https://liu.edu.lb/metaData/CSCI-DES.pdf"
+    },
+    {
+      "code": "CSCI450",
+      "name": "Machine Learning",
+      "description": "Supervised and unsupervised learning algorithms including regression, classification, clustering, dimensionality reduction, neural networks, deep learning, model evaluation, and deployment. Python libraries (scikit-learn, TensorFlow/PyTorch).",
+      "credits": 3,
+      "prerequisites": ["CSCI210", "CSCI220", "CSCI400"],
+      "category": "Major Elective",
+      "sourceUrl": "https://liu.edu.lb/metaData/CSCI-DES.pdf"
+    },
+    {
+      "code": "CSCI460",
+      "name": "Cybersecurity Fundamentals",
+      "description": "Security principles, cryptography, network security, application security, vulnerability assessment, penetration testing, security policies, and ethical hacking. Hands-on labs with security tools.",
+      "credits": 3,
+      "prerequisites": ["CSCI330"],
+      "category": "Major Elective",
+      "sourceUrl": "https://liu.edu.lb/metaData/CSCI-DES.pdf"
+    },
+    {
+      "code": "CSCI470",
+      "name": "Distributed Systems",
+      "description": "Distributed system architectures, communication, synchronization, consistency, fault tolerance, distributed algorithms, consensus, replication, and case studies of modern distributed systems (Hadoop, Spark, blockchain).",
+      "credits": 3,
+      "prerequisites": ["CSCI300", "CSCI330"],
+      "category": "Major Elective",
+      "sourceUrl": "https://liu.edu.lb/metaData/CSCI-DES.pdf"
+    },
+    {
+      "code": "CSCI480",
+      "name": "Senior Project I",
+      "description": "First semester of capstone project. Students propose, design, and begin implementation of a significant software system. Requirements analysis, system design, project planning, and prototype development. Technical writing and presentation skills.",
+      "credits": 3,
+      "prerequisites": ["CSCI320", "Senior Standing"],
+      "category": "Major Requirement",
+      "sourceUrl": "https://liu.edu.lb/metaData/CSCI-DES.pdf"
+    },
+    {
+      "code": "CSCI481",
+      "name": "Senior Project II",
+      "description": "Second semester of capstone project. Continuation of CSCI480: implementation, testing, deployment, and documentation of the software system. Final presentation and demo. Professional practices and ethics.",
+      "credits": 3,
+      "prerequisites": ["CSCI480"],
+      "category": "Major Requirement",
+      "sourceUrl": "https://liu.edu.lb/metaData/CSCI-DES.pdf"
+    },
+    {
+      "code": "CSCI490",
+      "name": "Special Topics in Computer Science",
+      "description": "Advanced topics not covered in regular curriculum. Content varies by semester based on faculty expertise and student interest. May include emerging technologies, research areas, or industry trends. Repeatable for credit with different topics.",
+      "credits": 3,
+      "prerequisites": ["Instructor Permission"],
+      "category": "Major Elective",
+      "sourceUrl": "https://liu.edu.lb/metaData/CSCI-DES.pdf"
+    },
+    {
+      "code": "CSCI495",
+      "name": "Internship in Computer Science",
+      "description": "Supervised work experience in computer science field. Students apply academic knowledge in professional setting. Requires faculty sponsorship, learning objectives, work logs, and final report. Minimum 120 hours of work.",
+      "credits": 3,
+      "prerequisites": ["Junior Standing", "Department Approval"],
+      "category": "Major Elective",
+      "sourceUrl": "https://liu.edu.lb/metaData/CSCI-DES.pdf"
+    }
+  ]
+}
