@@ -2,6 +2,7 @@ import {
   AcademicRecordStatus,
   type LetterGrade,
 } from "../../../generated/prisma/client.js";
+import logger from "../../../config/logger.js";
 import * as appRepo from "../../../repositories/app.repo.js";
 import type {
   DifficultFocusDto,
@@ -15,6 +16,7 @@ import {
   termKey,
   termLabel,
 } from "../../shared/index.js";
+import { findCourseResources } from "./find-resources.js";
 
 type FocusCourse = Awaited<ReturnType<typeof appRepo.listFocusCourses>>[number];
 
@@ -91,17 +93,34 @@ export const getRecommendations = async (
   if (!courseIds.length) return { failed: [], difficult: [] };
 
   // Fetch prerequisite info and resources only for the courses being recommended.
-
-  const [courses, resources] = await Promise.all([
+  const [courses, storedResources] = await Promise.all([
     appRepo.listFocusCourses(courseIds),
     appRepo.listCourseResources(courseIds),
   ]);
   const courseById = new Map(courses.map((course) => [course.id, course]));
 
-  const resourcesFor = (courseId: string): LearningResourceDto[] =>
-    resources.filter((resource) =>
+  const resourcesIn = (list: typeof storedResources, courseId: string) =>
+    list.filter((resource) =>
       resource.courses.some((course) => course.id === courseId),
     );
+
+  // The first time a course has no resources, have the AI find some. If that
+  // fails, the recommendations still return, just without new resources.
+  let resources = storedResources;
+  const missing = courses.filter(
+    (course) => !resourcesIn(storedResources, course.id).length,
+  );
+  if (missing.length) {
+    try {
+      await findCourseResources(userId, missing);
+      resources = await appRepo.listCourseResources(courseIds);
+    } catch (error) {
+      logger.warn("Could not find learning resources", { error });
+    }
+  }
+
+  const resourcesFor = (courseId: string): LearningResourceDto[] =>
+    resourcesIn(resources, courseId);
 
   // "Required for ..." when other courses list this one as a prerequisite.
   const unlocksNote = (course: FocusCourse | undefined) => {
