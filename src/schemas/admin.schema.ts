@@ -1,4 +1,5 @@
 import z from "zod";
+import { DegreeType } from "../generated/prisma/enums.js";
 import { PLACE_NAME } from "./me.schema.js";
 
 /** adminStatsQuerySchema validates the GET /admin/stats query: months is 1–24 and defaults to 8. */
@@ -148,3 +149,26 @@ export const universityParamsSchema = z.object({
 });
 
 export type UniversityParams = z.infer<typeof universityParamsSchema>;
+
+/** adminMajorSchema validates the POST /admin/universities/:universityId/majors body. */
+export const adminMajorSchema = z.object({
+  name: z
+    .string({ error: "Major name is required" })
+    .trim()
+    .min(1, { error: "Major name is required" })
+    .min(2, { error: "Enter the major's full name" })
+    .max(100, { error: "Use 100 characters or fewer" }),
+  degreeType: z
+    .enum(DegreeType, { error: "Select a valid degree type" })
+    .default(DegreeType.BACHELOR),
+  totalRequiredCredits: z
+    .number({ error: "Total credits must be a number" })
+    .int({ error: "Total credits must be a whole number" })
+    .min(1, { error: "Total credits must be at least 1" })
+    .max(300, { error: "Total credits must be at most 300" })
+    .nullish()
+    .transform((credits) => credits ?? null),
+});
+
+/** AdminMajorBody is the validated body: { name, degreeType, totalRequiredCredits }. */
+export type AdminMajorBody = z.infer<typeof adminMajorSchema>;
