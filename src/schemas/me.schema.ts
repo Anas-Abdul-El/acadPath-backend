@@ -74,7 +74,7 @@ export const uploadSourcesSchema = z
 /** UploadSourcesInput is the validated files, each with its detected sourceType. */
 export type UploadSourcesInput = z.infer<typeof uploadSourcesSchema>;
 
-const PLACE_NAME = /^[\p{L}\p{M}\s.'’()-]+$/u;
+export const PLACE_NAME = /^[\p{L}\p{M}\s.'’()-]+$/u;
 
 /**
  * selectUniversitySchema validates the PUT /me/university request body.
