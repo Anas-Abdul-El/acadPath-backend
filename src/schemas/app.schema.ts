@@ -3,6 +3,7 @@ import {
   AcademicRecordStatus,
   CourseCategory,
   LetterGrade,
+  PlannedCourseStatus,
   ResourceDifficulty,
   ResourcePlatform,
   Term,
@@ -49,6 +50,26 @@ export const generateStudyPlanSchema = z
 
 /** GenerateStudyPlanBody is the validated body: { maxCreditsPerSemester }. */
 export type GenerateStudyPlanBody = z.infer<typeof generateStudyPlanSchema>;
+
+/** planCourseParamsSchema validates the :planCourseId route param. */
+export const planCourseParamsSchema = z.object({
+  planCourseId: z.uuid({ error: "Invalid plan course id" }),
+});
+
+export type PlanCourseParams = z.infer<typeof planCourseParamsSchema>;
+
+/**
+ * updatePlanCourseSchema validates the PATCH /me/study-plan/courses/:planCourseId
+ * body: SKIPPED to skip a planned course, PLANNED to restore it.
+ */
+export const updatePlanCourseSchema = z.strictObject({
+  status: z.enum([PlannedCourseStatus.PLANNED, PlannedCourseStatus.SKIPPED], {
+    error: "Status must be PLANNED or SKIPPED",
+  }),
+});
+
+/** UpdatePlanCourseBody is the validated body: { status }. */
+export type UpdatePlanCourseBody = z.infer<typeof updatePlanCourseSchema>;
 
 /** studyPlanDataSchema validates the study planning AI's reply. */
 export const studyPlanDataSchema = z.object({
