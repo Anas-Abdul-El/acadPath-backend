@@ -151,10 +151,32 @@ export const learningResourcesDataSchema = z.object({
       duration: z.string().nullable().default(null),
       difficulty: z.enum(ResourceDifficulty).nullable().catch(null),
       topics: z.array(z.string()).default([]),
-      courses: z.array(z.string()),
+      courses: z.array(z.string()).default([]),
     }),
   ),
 });
 
 /** LearningResourcesData is the validated AI reply: { resources }. */
 export type LearningResourcesData = z.infer<typeof learningResourcesDataSchema>;
+
+/** resourceSearchSchema validates the POST /resources/search body. */
+export const resourceSearchSchema = z.object({
+  query: z
+    .string({ error: "Enter a course name, course code, or topic" })
+    .trim()
+    .min(2, { error: "Use at least 2 characters" })
+    .max(100, { error: "Use 100 characters or fewer" }),
+  goal: z
+    .string()
+    .trim()
+    .max(300, { error: "Use 300 characters or fewer" })
+    .optional()
+    .transform((goal) => goal || undefined),
+  platforms: z
+    .array(z.enum(ResourcePlatform), { error: "Choose the platforms" })
+    .min(1, { error: "Choose at least one platform" })
+    .transform((platforms) => [...new Set(platforms)]),
+});
+
+/** ResourceSearchBody is the validated body: { query, goal?, platforms }. */
+export type ResourceSearchBody = z.infer<typeof resourceSearchSchema>;
