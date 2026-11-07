@@ -283,3 +283,12 @@ export interface RecommendationsDto {
 export interface RecommendationsOutput {
   data: RecommendationsDto;
 }
+
+export interface ResourceSearchDto {
+  results: LearningResourceDto[];
+  matchedCourse: CourseSummaryDto | null;
+}
+
+export interface ResourceSearchOutput {
+  data: ResourceSearchDto;
+}
