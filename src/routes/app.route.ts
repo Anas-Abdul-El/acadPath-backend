@@ -11,6 +11,7 @@ import {
   advisorChatSchema,
   courseParamsSchema,
   generateStudyPlanSchema,
+  quizSchema,
   resourceSearchSchema,
   studentCoursesQuerySchema,
   whatIfSchema,
@@ -21,6 +22,7 @@ import appController from "../controllers";
 const appRouter: Router = Router();
 export const courseRouter: Router = Router();
 export const resourceRouter: Router = Router();
+export const quizRouter: Router = Router();
 
 appRouter.get(
   "/academic-summary",
@@ -96,6 +98,14 @@ resourceRouter.post(
   authorize("STUDENT"),
   validateBody(resourceSearchSchema),
   catchAsync(appController.searchResources),
+);
+
+quizRouter.post(
+  "/",
+  authenticate,
+  authorize("STUDENT"),
+  validateBody(quizSchema),
+  catchAsync(appController.generateQuiz),
 );
 
 export default appRouter;
