@@ -3,6 +3,8 @@ import {
   AcademicRecordStatus,
   CourseCategory,
   LetterGrade,
+  ResourceDifficulty,
+  ResourcePlatform,
   Term,
 } from "../generated/prisma/enums.js";
 
@@ -135,3 +137,24 @@ export const advisorChatSchema = z.object({
 
 /** AdvisorChatBody is the validated body: { messages }. */
 export type AdvisorChatBody = z.infer<typeof advisorChatSchema>;
+
+/** learningResourcesDataSchema validates the resource discovery AI's reply. */
+export const learningResourcesDataSchema = z.object({
+  resources: z.array(
+    z.object({
+      title: z.string().trim().min(1),
+      url: z.url({ protocol: /^https$/ }),
+      platform: z.enum(ResourcePlatform),
+      provider: z.string().nullable().default(null),
+      format: z.string().nullable().default(null),
+      description: z.string().nullable().default(null),
+      duration: z.string().nullable().default(null),
+      difficulty: z.enum(ResourceDifficulty).nullable().catch(null),
+      topics: z.array(z.string()).default([]),
+      courses: z.array(z.string()),
+    }),
+  ),
+});
+
+/** LearningResourcesData is the validated AI reply: { resources }. */
+export type LearningResourcesData = z.infer<typeof learningResourcesDataSchema>;
