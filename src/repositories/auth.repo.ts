@@ -1,5 +1,5 @@
 import { authConfig } from "../config/auth.js";
-import type { User } from "../generated/prisma/client.js";
+import { UserRole, type User } from "../generated/prisma/client.js";
 import { prisma } from "../libs/prisma.js";
 import type { SigninInput } from "../schemas/auth.schema.js";
 import type { PublicUser } from "../types/auth.dto.js";
@@ -25,7 +25,7 @@ export const createAccount = async (
     data: {
       email: account.email,
       passwordHash: account.password,
-      role: account.role,
+      role: UserRole.STUDENT,
       name: account.name,
     },
     select: publicUserSelect,
