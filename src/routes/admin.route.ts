@@ -7,6 +7,7 @@ import {
   validateQuery,
 } from "../middlewares/index.js";
 import {
+  adminMajorSchema,
   adminStatsQuerySchema,
   adminUniversitiesQuerySchema,
   adminUniversitySchema,
@@ -55,6 +56,19 @@ adminRouter.delete(
   "/universities/:universityId",
   validateParams(universityParamsSchema),
   catchAsync(adminController.deleteUniversity),
+);
+
+adminRouter.get(
+  "/universities/:universityId/majors",
+  validateParams(universityParamsSchema),
+  catchAsync(adminController.listMajors),
+);
+
+adminRouter.post(
+  "/universities/:universityId/majors",
+  validateParams(universityParamsSchema),
+  validateBody(adminMajorSchema),
+  catchAsync(adminController.createMajor),
 );
 
 export default adminRouter;
