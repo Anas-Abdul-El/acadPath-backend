@@ -1,7 +1,7 @@
 import type { User } from "../generated/prisma/client.js";
 
-/** A user as it is safe to send to the client: never includes the password hash. */
-export type PublicUser = Omit<User, "passwordHash">;
+/** A user as it is sent to the client: UserDto in dto.md. */
+export type PublicUser = Pick<User, "id" | "name" | "email" | "role">;
 
 export interface SigninOutput {
   data: {
@@ -12,4 +12,8 @@ export interface SigninOutput {
 
 export type LoginOutput = SigninOutput;
 
-export type RefreshOutput = SigninOutput;
+export interface RefreshOutput {
+  data: {
+    accessToken: string;
+  };
+}
