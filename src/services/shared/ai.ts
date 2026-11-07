@@ -7,12 +7,11 @@ export const askAiForJson = async <T extends z.ZodType>(
   payload: unknown,
   schema: T,
   invalidMessage: string,
+  { webSearch = false }: { webSearch?: boolean } = {},
 ): Promise<z.output<T>> => {
   let reply: string | null;
   try {
-    reply = await aiMessage(prompt, JSON.stringify(payload), {
-      webSearch: false,
-    });
+    reply = await aiMessage(prompt, JSON.stringify(payload), { webSearch });
   } catch (error) {
     throw new AppErr("The AI provider failed, try again later", 502, {
       cause: error,
