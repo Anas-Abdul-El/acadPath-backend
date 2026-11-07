@@ -204,6 +204,10 @@ export interface StudyPlanOutput {
   data: StudyPlanDto | null;
 }
 
+export interface StudyPlanCourseOutput {
+  data: StudyPlanCourseDto;
+}
+
 export type ScenarioKind =
   | "fail"
   | "grade-change"
