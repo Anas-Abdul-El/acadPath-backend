@@ -1,15 +1,21 @@
 import { authConfig } from "../config/auth.js";
-import { YearOfStudy, type User } from "../generated/prisma/client.js";
+import type { User } from "../generated/prisma/client.js";
 import { prisma } from "../libs/prisma.js";
 import type { SigninInput } from "../schemas/auth.schema.js";
 import type { PublicUser } from "../types/auth.dto.js";
 
-export const getUserByEmail = async (email: string): Promise<User | null> => {
-  const user = await prisma.user.findUnique({
-    where: { email },
-  });
+const publicUserSelect = {
+  id: true,
+  name: true,
+  email: true,
+  role: true,
+} as const;
 
-  return user;
+export const getUserByEmail = async (email: string) => {
+  return prisma.user.findFirst({
+    where: { email: { equals: email, mode: "insensitive" } },
+    select: { ...publicUserSelect, passwordHash: true },
+  });
 };
 
 export const createAccount = async (
@@ -22,7 +28,7 @@ export const createAccount = async (
       role: account.role,
       name: account.name,
     },
-    omit: { passwordHash: true },
+    select: publicUserSelect,
   });
 };
 
@@ -75,6 +81,6 @@ export const updateToken = async (
 export const getUserById = async (id: string): Promise<PublicUser | null> => {
   return prisma.user.findUnique({
     where: { id },
-    omit: { passwordHash: true },
+    select: publicUserSelect,
   });
 };
