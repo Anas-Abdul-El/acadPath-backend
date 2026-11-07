@@ -43,5 +43,5 @@ export const refresh = async (refreshToken: string) => {
   );
   if (!rotated) throw invalidToken;
 
-  return { user, ...tokens };
+  return tokens;
 };

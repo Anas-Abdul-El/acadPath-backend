@@ -16,7 +16,7 @@ export const login = async (
     acc.password,
     user?.passwordHash ?? (await dummyHash),
   );
-  if (!user || !passwordMatch) throw new AppErr("wrong email or password", 401);
+  if (!user || !passwordMatch) throw new AppErr("Invalid email or password", 401);
 
   const { passwordHash: _, ...publicUser } = user;
   const tokens = await startSession(publicUser);

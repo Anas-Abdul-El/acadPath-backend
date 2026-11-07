@@ -9,7 +9,7 @@ export const signIn = async (
   acc: SigninInput,
 ): Promise<{ user: PublicUser; accessToken: string; refreshToken: string }> => {
   const isUserExists = await authRepo.getUserByEmail(acc.email);
-  if (isUserExists) throw new AppErr("Email already exists", 400);
+  if (isUserExists) throw new AppErr("Email is already registered", 409);
 
   let passwordHash: string;
   try {

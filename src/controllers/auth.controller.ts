@@ -1,7 +1,6 @@
 import type { Request, Response, NextFunction, CookieOptions } from "express";
 import type {
   LoginInput,
-  LogoutInput,
   RefreshTokenInput,
   SigninInput,
 } from "../schemas/auth.schema.js";
@@ -34,7 +33,7 @@ export const signIn = async (
     maxAge: authConfig.refreshTokenTtlMs,
   });
 
-  res.send({
+  res.status(201).send({
     data: {
       user,
       accessToken,
@@ -68,7 +67,7 @@ export const refresh = async (req: Request, res: Response<RefreshOutput>) => {
   const { refreshToken: oldRefreshToken } = res.locals
     .cookies as RefreshTokenInput;
 
-  const { user, accessToken, refreshToken } =
+  const { accessToken, refreshToken } =
     await authService.refresh(oldRefreshToken);
 
   res.cookie(authConfig.refreshCookieName, refreshToken, {
@@ -76,18 +75,12 @@ export const refresh = async (req: Request, res: Response<RefreshOutput>) => {
     maxAge: authConfig.refreshTokenTtlMs,
   });
 
-  res.send({
-    data: {
-      user,
-      accessToken,
-    },
-  });
+  res.send({ data: { accessToken } });
 };
 
 export const logout = async (req: Request, res: Response) => {
-  const { refreshToken } = res.locals.cookies as LogoutInput;
-
-  await authService.logout(refreshToken);
+  const refreshToken: unknown = req.cookies?.refreshToken;
+  if (typeof refreshToken === "string") await authService.logout(refreshToken);
 
   res.clearCookie(authConfig.refreshCookieName, refreshCookieOptions);
   res.sendStatus(204);
