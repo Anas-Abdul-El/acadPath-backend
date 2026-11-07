@@ -1,3 +1,6 @@
 export * from "./get-admin-stats.service.js";
 export * from "./create-university.service.js";
 export * from "./list-universities.service.js";
+export * from "./delete-university.service.js";
+export * from "./get-university.service.js";
+export * from "./update-university.service.js";
