@@ -11,6 +11,7 @@ import {
   advisorChatSchema,
   courseParamsSchema,
   generateStudyPlanSchema,
+  resourceSearchSchema,
   studentCoursesQuerySchema,
   whatIfSchema,
 } from "../schemas/app.schema.js";
@@ -19,6 +20,7 @@ import appController from "../controllers";
 
 const appRouter: Router = Router();
 export const courseRouter: Router = Router();
+export const resourceRouter: Router = Router();
 
 appRouter.get(
   "/academic-summary",
@@ -86,6 +88,14 @@ courseRouter.get(
   authenticate,
   validateParams(courseParamsSchema),
   catchAsync(appController.getCourseDetails),
+);
+
+resourceRouter.post(
+  "/search",
+  authenticate,
+  authorize("STUDENT"),
+  validateBody(resourceSearchSchema),
+  catchAsync(appController.searchResources),
 );
 
 export default appRouter;

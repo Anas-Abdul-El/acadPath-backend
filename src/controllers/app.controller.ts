@@ -3,11 +3,13 @@ import logger from "../config/logger.js";
 import AppErr from "../libs/appErr.js";
 import * as coursesService from "../services/courses/index.js";
 import * as meService from "../services/me/index.js";
+import * as resourcesService from "../services/resources/index.js";
 import type {
   AcademicRecordsQuery,
   AdvisorChatBody,
   CourseParams,
   GenerateStudyPlanBody,
+  ResourceSearchBody,
   StudentCoursesQuery,
   WhatIfBody,
 } from "../schemas/app.schema.js";
@@ -16,6 +18,7 @@ import type {
   AcademicSummaryOutput,
   CourseDetailsOutput,
   RecommendationsOutput,
+  ResourceSearchOutput,
   StudentCoursesOutput,
   StudyPlanOutput,
   WhatIfOutput,
@@ -121,6 +124,17 @@ export const getRecommendations = async (
 
   const data = await meService.getRecommendations(authUser.id);
 
+  res.send({ data });
+};
+
+export const searchResources = async (
+  req: Request<unknown, unknown, ResourceSearchBody>,
+  res: Response<ResourceSearchOutput>,
+) => {
+  const authUser = res.locals.user;
+  if (!authUser) throw new AppErr("Missing or malformed access token", 401);
+
+  const data = await resourcesService.searchResources(authUser.id, req.body);
   res.send({ data });
 };
 
