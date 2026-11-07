@@ -288,7 +288,7 @@ export const listAdminCourses = async (
   skip: number,
   take: number,
 ) => {
-  return prisma.$transaction([
+  return Promise.all([
     prisma.course.findMany({
       where,
       select: adminCourseSelect,
@@ -439,7 +439,7 @@ export const listAdminStudents = async (
   skip: number,
   take: number,
 ) => {
-  return prisma.$transaction([
+  return Promise.all([
     prisma.user.findMany({
       where: studentWhere(where),
       select: adminStudentSelect,
