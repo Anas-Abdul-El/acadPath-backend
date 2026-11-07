@@ -15,6 +15,7 @@ import type {
   AcademicRecordsOutput,
   AcademicSummaryOutput,
   CourseDetailsOutput,
+  RecommendationsOutput,
   StudentCoursesOutput,
   StudyPlanOutput,
   WhatIfOutput,
@@ -107,6 +108,18 @@ export const analyzeWhatIf = async (
   if (!authUser) throw new AppErr("Missing or malformed access token", 401);
 
   const data = await meService.analyzeWhatIf(authUser.id, req.body);
+
+  res.send({ data });
+};
+
+export const getRecommendations = async (
+  req: Request,
+  res: Response<RecommendationsOutput>,
+) => {
+  const authUser = res.locals.user;
+  if (!authUser) throw new AppErr("Missing or malformed access token", 401);
+
+  const data = await meService.getRecommendations(authUser.id);
 
   res.send({ data });
 };
