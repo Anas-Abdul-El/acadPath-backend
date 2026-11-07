@@ -2,7 +2,7 @@ import AppErr from "../../libs/appErr.js";
 import * as adminRepo from "../../repositories/admin.repo.js";
 import type { AdminUniversityDetailsDto } from "../../types/admin.dto.js";
 import { getSourceStatus } from "../me/index.js";
-import { toAdminUniversityDto } from "./universities.js";
+import { toAdminMajorDto, toAdminUniversityDto } from "./universities.js";
 
 /** Builds the university details sheet for GET /admin/universities/:universityId: majors by name, newest sources first. */
 export const getUniversity = async (
@@ -16,11 +16,7 @@ export const getUniversity = async (
 
   return {
     ...toAdminUniversityDto({ ...rest, sources }, courseCount),
-    majors: majors.map(({ _count, ...major }) => ({
-      ...major,
-      courseCount: _count.courses,
-      studentCount: _count.students,
-    })),
+    majors: majors.map(toAdminMajorDto),
     sources: sources.map((source) => ({
       id: source.id,
       title: source.title,
