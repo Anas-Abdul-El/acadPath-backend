@@ -10,7 +10,7 @@ type PlanCourse = NonNullable<
   Awaited<ReturnType<typeof appRepo.getStudyPlan>>
 >["semesters"][number]["courses"][number]["course"];
 
-const toCourseDto = ({ requisites, ...course }: PlanCourse): CourseDto => ({
+export const toCourseDto = ({ requisites, ...course }: PlanCourse): CourseDto => ({
   ...course,
   ...splitRequisites(requisites),
 });
