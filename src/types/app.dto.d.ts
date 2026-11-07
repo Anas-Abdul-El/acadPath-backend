@@ -292,3 +292,21 @@ export interface ResourceSearchDto {
 export interface ResourceSearchOutput {
   data: ResourceSearchDto;
 }
+
+export interface QuizQuestionDto {
+  id: string;
+  prompt: string;
+  options: string[];
+  answer: number;
+  explanation: string;
+}
+
+export interface QuizDto {
+  id: string;
+  topic: string;
+  questions: QuizQuestionDto[];
+}
+
+export interface QuizOutput {
+  data: QuizDto;
+}
