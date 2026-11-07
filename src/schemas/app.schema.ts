@@ -180,3 +180,44 @@ export const resourceSearchSchema = z.object({
 
 /** ResourceSearchBody is the validated body: { query, goal?, platforms }. */
 export type ResourceSearchBody = z.infer<typeof resourceSearchSchema>;
+
+/** quizSchema validates the POST /quizzes body: exactly one of resourceId or courseId, and 5, 10 or 15 questions. */
+export const quizSchema = z
+  .object({
+    resourceId: z.uuid({ error: "Invalid resource id" }).nullish(),
+    courseId: z.uuid({ error: "Invalid course id" }).nullish(),
+    count: z.union([z.literal(5), z.literal(10), z.literal(15)], {
+      error: "Choose 5, 10 or 15 questions",
+    }),
+  })
+  .refine((body) => !body.resourceId !== !body.courseId, {
+    error: "Send exactly one of resourceId or courseId",
+  });
+
+/** QuizBody is the validated body: { resourceId?, courseId?, count }. */
+export type QuizBody = z.infer<typeof quizSchema>;
+
+/** quizDataSchema validates the quiz AI's reply: a quiz or not enough material. */
+export const quizDataSchema = z.discriminatedUnion("status", [
+  z.object({
+    status: z.literal("ok"),
+    topic: z.string().trim().min(1),
+    questions: z
+      .array(
+        z.object({
+          prompt: z.string().trim().min(1),
+          options: z
+            .array(z.string().trim().min(1))
+            .length(4)
+            .refine((options) => new Set(options).size === 4),
+          answer: z.number().int().min(0).max(3),
+          explanation: z.string().trim().min(1),
+        }),
+      )
+      .min(1),
+  }),
+  z.object({ status: z.literal("insufficient") }),
+]);
+
+/** QuizData is the validated AI reply. */
+export type QuizData = z.infer<typeof quizDataSchema>;
