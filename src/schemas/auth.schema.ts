@@ -1,5 +1,4 @@
 import z from "zod";
-import { UserRole, YearOfStudy } from "../generated/prisma/enums.js";
 
 const email = z
   .string({ error: "Email is required" })
@@ -24,11 +23,10 @@ export type LoginInput = z.infer<typeof loginSchema>;
  * signinSchema validates the sign-up request body.
  * Email is trimmed and lowercased like loginSchema. Password: 8+ characters with a
  * number, at most 72 bytes (bcrypt ignores anything past that). Name is trimmed, non-empty.
+ * There is no role: every account created here is a student, and a role sent by the
+ * client is dropped. Admins are promoted with scripts/make-admin.mts.
  */
 export const signinSchema = z.object({
-  role: z.enum([UserRole.STUDENT, UserRole.ADMIN], {
-    error: "Role must be either STUDENT or ADMIN",
-  }),
   email,
   password: z
     .string({ error: "Password is required" })
@@ -44,7 +42,7 @@ export const signinSchema = z.object({
     .min(1, { error: "Name is required" }),
 });
 
-/** SigninInput is the validated sign-up body: { email, password, name, yearOfStudy }. */
+/** SigninInput is the validated sign-up body: { email, password, name }. */
 export type SigninInput = z.infer<typeof signinSchema>;
 
 /**
