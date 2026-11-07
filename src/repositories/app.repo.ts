@@ -1,6 +1,7 @@
 import {
   CourseRelationType,
   Prisma,
+  type ResourcePlatform,
   type Term,
 } from "../generated/prisma/client.js";
 import { prisma } from "../libs/prisma.js";
@@ -285,10 +286,44 @@ export const saveLearningResources = async (
         where: { url: resource.url },
         create: { ...resource, courses },
         update: { courses },
-        select: { id: true },
+        select: learningResourceSelect,
       });
     }),
   );
+};
+
+export const listMajorCourseSummaries = async (majorId: string) => {
+  return prisma.course.findMany({
+    where: { majorId },
+    select: { ...courseSummarySelect, description: true },
+    orderBy: { code: "asc" },
+  });
+};
+
+export const searchStoredResources = async ({
+  platforms,
+  courseId,
+  terms,
+}: {
+  platforms: ResourcePlatform[];
+  courseId: string | null;
+  terms: string[];
+}) => {
+  return prisma.learningResource.findMany({
+    where: {
+      platform: { in: platforms },
+      OR: [
+        ...(courseId ? [{ courses: { some: { id: courseId } } }] : []),
+        ...terms.flatMap((term) => [
+          { title: { contains: term, mode: "insensitive" as const } },
+          { description: { contains: term, mode: "insensitive" as const } },
+        ]),
+      ],
+    },
+    select: learningResourceSelect,
+    orderBy: [{ verified: "desc" }, { title: "asc" }],
+    take: 50,
+  });
 };
 
 export const listCourseResources = async (courseIds: string[]) => {
