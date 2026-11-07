@@ -1,6 +1,7 @@
 import {
   CourseRelationType,
   Prisma,
+  type PlannedCourseStatus,
   type ResourcePlatform,
   type Term,
 } from "../generated/prisma/client.js";
@@ -107,6 +108,26 @@ export const getLatestStudyPlan = async (userId: string) => {
   });
 };
 
+const planCourseSelect = {
+  id: true,
+  status: true,
+  course: {
+    select: {
+      ...courseSummarySelect,
+      majorId: true,
+      description: true,
+      offeredTerms: true,
+      requisites: {
+        select: {
+          relationType: true,
+          requiredCourse: { select: courseRefSelect },
+        },
+        orderBy: { requiredCourse: { code: "asc" } },
+      },
+    },
+  },
+} as const satisfies Prisma.StudyPlanCourseSelect;
+
 export const getStudyPlan = async (userId: string) => {
   return prisma.studyPlan.findFirst({
     where: { student: { userId } },
@@ -126,25 +147,7 @@ export const getStudyPlan = async (userId: string) => {
           year: true,
           rationale: true,
           courses: {
-            select: {
-              id: true,
-              status: true,
-              course: {
-                select: {
-                  ...courseSummarySelect,
-                  majorId: true,
-                  description: true,
-                  offeredTerms: true,
-                  requisites: {
-                    select: {
-                      relationType: true,
-                      requiredCourse: { select: courseRefSelect },
-                    },
-                    orderBy: { requiredCourse: { code: "asc" } },
-                  },
-                },
-              },
-            },
+            select: planCourseSelect,
             orderBy: { course: { code: "asc" } },
           },
         },
@@ -359,5 +362,26 @@ export const getQuizCourse = async (courseId: string) => {
   return prisma.course.findUnique({
     where: { id: courseId },
     select: quizCourseSelect,
+  });
+};
+
+export const findStudentPlanCourse = async (
+  userId: string,
+  planCourseId: string,
+) => {
+  return prisma.studyPlanCourse.findFirst({
+    where: { id: planCourseId, semester: { studyPlan: { student: { userId } } } },
+    select: { id: true },
+  });
+};
+
+export const updatePlanCourseStatus = async (
+  planCourseId: string,
+  status: PlannedCourseStatus,
+) => {
+  return prisma.studyPlanCourse.update({
+    where: { id: planCourseId },
+    data: { status },
+    select: planCourseSelect,
   });
 };
