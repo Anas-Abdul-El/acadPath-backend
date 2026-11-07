@@ -1,4 +1,5 @@
 import { Router } from "express";
+import adminRouter from "./admin.route.js";
 import appRouter, {
   courseRouter,
   quizRouter,
@@ -15,5 +16,6 @@ router.use("/me", appRouter);
 router.use("/courses", courseRouter);
 router.use("/resources", resourceRouter);
 router.use("/quizzes", quizRouter);
+router.use("/admin", adminRouter);
 
 export default router;
