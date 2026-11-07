@@ -1,5 +1,6 @@
-import { CourseSource, UserRole } from "../generated/prisma/client.js";
+import { CourseSource, Prisma, UserRole } from "../generated/prisma/client.js";
 import { prisma } from "../libs/prisma.js";
+import type { AdminUniversityBody } from "../schemas/admin.schema.js";
 
 const activeStudent = { role: UserRole.STUDENT, isDeleted: false };
 
@@ -34,4 +35,68 @@ export const listUniversitySourceStates = async () => {
       },
     },
   });
+};
+
+const adminUniversitySelect = {
+  id: true,
+  name: true,
+  shortName: true,
+  country: true,
+  city: true,
+  website: true,
+  catalogYear: true,
+  createdAt: true,
+  updatedAt: true,
+  sources: {
+    select: { errorMessage: true, lastProcessedAt: true, lastFetchedAt: true },
+  },
+  _count: {
+    select: {
+      majors: true,
+      students: { where: { user: { isDeleted: false } } },
+    },
+  },
+} as const satisfies Prisma.UniversitySelect;
+
+export const listAdminUniversities = async (where: Prisma.UniversityWhereInput) => {
+  return prisma.university.findMany({
+    where,
+    select: adminUniversitySelect,
+    orderBy: { name: "asc" },
+  });
+};
+
+export const getAdminUniversity = async (id: string) => {
+  return prisma.university.findUniqueOrThrow({
+    where: { id },
+    select: adminUniversitySelect,
+  });
+};
+
+export const countCoursesByUniversity = async (universityIds: string[]) => {
+  const majors = await prisma.major.findMany({
+    where: { universityId: { in: universityIds } },
+    select: { universityId: true, _count: { select: { courses: true } } },
+  });
+  const counts = new Map<string, number>();
+  for (const { universityId, _count } of majors)
+    counts.set(universityId, (counts.get(universityId) ?? 0) + _count.courses);
+  return counts;
+};
+
+export const findUniversityByNameAndCountry = async (
+  name: string,
+  country: string,
+) => {
+  return prisma.university.findFirst({
+    where: {
+      name: { equals: name, mode: "insensitive" },
+      country: { equals: country, mode: "insensitive" },
+    },
+    select: { id: true },
+  });
+};
+
+export const createUniversity = async (data: AdminUniversityBody) => {
+  return prisma.university.create({ data, select: { id: true } });
 };
