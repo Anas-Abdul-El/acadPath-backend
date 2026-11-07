@@ -27,10 +27,6 @@ authRouter.post(
   catchAsync(authController.refresh),
 );
 
-authRouter.post(
-  "/logout",
-  validateCookie(authSchema.logoutSchema, 401),
-  catchAsync(authController.logout),
-);
+authRouter.post("/logout", catchAsync(authController.logout));
 
 export default authRouter;
