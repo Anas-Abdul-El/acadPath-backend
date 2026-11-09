@@ -84,6 +84,13 @@ export interface SelectUniversityOutput {
 
 export type MissingData = "UNIVERSITY_AND_MAJOR" | "MAJOR";
 
+export interface YearOfStudyOutput {
+  data: {
+    yearOfStudy: YearOfStudy;
+    transcriptRequired: boolean;
+  };
+}
+
 export interface UniversitySourceDto {
   id: string;
   title: string | null;

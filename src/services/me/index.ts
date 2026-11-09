@@ -1,6 +1,7 @@
 export * from "./complete-onboarding.service.js";
 export * from "./get-me.service.js";
 export * from "./update-profile.service.js";
+export * from "./update-year-of-study.service.js";
 export * from "./academic/index.js";
 export * from "./advisor/index.js";
 export * from "./courses/index.js";

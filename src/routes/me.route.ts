@@ -11,9 +11,12 @@ import {
   documentsQuerySchema,
   selectUniversitySchema,
   updateProfileSchema,
+  uploadDocumentFilesSchema,
   uploadDocumentsBodySchema,
   uploadSourcesSchema,
+  yearOfStudySchema,
 } from "../schemas/me.schema.js";
+import { pollLimiter } from "../config/limiter.js";
 import catchAsync from "../utils/catchAsync";
 import meController from "../controllers";
 
@@ -33,6 +36,7 @@ meRouter.get(
   "/university/sources",
   authenticate,
   authorize("STUDENT"),
+  pollLimiter,
   catchAsync(meController.getStudentUniversitySources),
 );
 
@@ -49,6 +53,7 @@ meRouter.get(
   "/documents",
   authenticate,
   authorize("STUDENT"),
+  pollLimiter,
   validateQuery(documentsQuerySchema),
   catchAsync(meController.listDocuments),
 );
@@ -58,9 +63,17 @@ meRouter.post(
   authenticate,
   authorize("STUDENT"),
   upload.array("files", 20),
-  validateFiles(uploadSourcesSchema),
+  validateFiles(uploadDocumentFilesSchema),
   validateBody(uploadDocumentsBodySchema),
   catchAsync(meController.uploadDocuments),
+);
+
+meRouter.put(
+  "/year-of-study",
+  authenticate,
+  authorize("STUDENT"),
+  validateBody(yearOfStudySchema),
+  catchAsync(meController.updateYearOfStudy),
 );
 
 meRouter.patch(

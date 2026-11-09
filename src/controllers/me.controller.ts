@@ -7,6 +7,7 @@ import type {
   UpdateProfileBody,
   UploadDocumentsBody,
   UploadSourcesInput,
+  YearOfStudyBody,
 } from "../schemas/me.schema.js";
 import type {
   MeOutput,
@@ -14,6 +15,7 @@ import type {
   StudentDocumentsOutput,
   UniversityOutput,
   UniversitySourcesOutput,
+  YearOfStudyOutput,
 } from "../types/me.dto.js";
 
 export const getMeData = async (req: Request, res: Response<MeOutput>) => {
@@ -61,6 +63,18 @@ export const updateProfile = async (
   if (!authUser) throw new AppErr("Missing or malformed access token", 401);
 
   const data = await meService.updateProfile(authUser.id, req.body);
+
+  res.send({ data });
+};
+
+export const updateYearOfStudy = async (
+  req: Request<unknown, unknown, YearOfStudyBody>,
+  res: Response<YearOfStudyOutput>,
+) => {
+  const authUser = res.locals.user;
+  if (!authUser) throw new AppErr("Missing or malformed access token", 401);
+
+  const data = await meService.updateYearOfStudy(authUser.id, req.body);
 
   res.send({ data });
 };
