@@ -27,49 +27,67 @@ const detectSourceType = (buffer: Buffer): SourceType | null => {
   return null;
 };
 
-const sourceFileSchema = z
-  .object({
-    originalname: z.string(),
-    size: z
-      .number()
-      .int()
-      .positive({ error: "File is empty" })
-      .max(MAX_SOURCE_FILE_SIZE, { error: "Each file must be 25 MB or smaller" }),
-    mimetype: z.string(),
-    buffer: z.instanceof(Buffer),
-  })
-  .transform((file, ctx) => {
-    const sourceType = detectSourceType(file.buffer);
-    if (!sourceType) {
-      ctx.issues.push({
-        code: "custom",
-        message: "File must be a PDF, PNG, JPEG or WebP",
-        input: file,
-      });
-      return z.NEVER;
-    }
+// unsupportedTypeStatus, when set, is put on the issue for a file whose bytes
+// aren't a PDF or image, and validateFiles responds with that status.
+const uploadedFileSchema = (unsupportedTypeStatus?: number) =>
+  z
+    .object({
+      originalname: z.string(),
+      size: z
+        .number()
+        .int()
+        .positive({ error: "File is empty" })
+        .max(MAX_SOURCE_FILE_SIZE, { error: "Each file must be 25 MB or smaller" }),
+      mimetype: z.string(),
+      buffer: z.instanceof(Buffer),
+    })
+    .transform((file, ctx) => {
+      const sourceType = detectSourceType(file.buffer);
+      if (!sourceType) {
+        ctx.issues.push({
+          code: "custom",
+          message: "File must be a PDF, PNG, JPEG or WebP",
+          input: file,
+          ...(unsupportedTypeStatus && {
+            params: { status: unsupportedTypeStatus },
+          }),
+        });
+        return z.NEVER;
+      }
 
-    return { ...file, sourceType };
-  });
+      return { ...file, sourceType };
+    });
+
+// 1–20 non-empty files, ≤ 25 MB each and ≤ 150 MB total. The type is read
+// from the file's bytes, not its extension or mimetype.
+const uploadedFilesSchema = (unsupportedTypeStatus?: number) =>
+  z
+    .array(uploadedFileSchema(unsupportedTypeStatus), {
+      error: "Upload at least one file",
+    })
+    .min(1, { error: "Upload at least one file" })
+    .max(20, { error: "Upload at most 20 files" })
+    .refine(
+      (files) =>
+        files.reduce((total, file) => total + file.size, 0) <=
+        MAX_SOURCES_TOTAL_SIZE,
+      {
+        error: "Files must be 150 MB or smaller in total",
+        params: { status: 413 },
+      },
+    );
 
 /**
  * uploadSourcesSchema validates the files of POST /me/university/sources.
- * 1–20 non-empty files, ≤ 25 MB each and ≤ 150 MB total. The type is read
- * from the file's bytes, not its extension or mimetype.
+ * A file of an unsupported type is a 400.
  */
-export const uploadSourcesSchema = z
-  .array(sourceFileSchema, { error: "Upload at least one file" })
-  .min(1, { error: "Upload at least one file" })
-  .max(20, { error: "Upload at most 20 files" })
-  .refine(
-    (files) =>
-      files.reduce((total, file) => total + file.size, 0) <=
-      MAX_SOURCES_TOTAL_SIZE,
-    {
-      error: "Files must be 150 MB or smaller in total",
-      params: { status: 413 },
-    },
-  );
+export const uploadSourcesSchema = uploadedFilesSchema();
+
+/**
+ * uploadDocumentFilesSchema validates the files of POST /me/documents, with
+ * the same limits as the sources. A file of an unsupported type is a 415.
+ */
+export const uploadDocumentFilesSchema = uploadedFilesSchema(415);
 
 /** UploadSourcesInput is the validated files, each with its detected sourceType. */
 export type UploadSourcesInput = z.infer<typeof uploadSourcesSchema>;
@@ -128,6 +146,14 @@ export const updateProfileSchema = z
 
 /** UpdateProfileBody is the validated body: { yearOfStudy? }. */
 export type UpdateProfileBody = z.infer<typeof updateProfileSchema>;
+
+/** yearOfStudySchema validates the PUT /me/year-of-study request body. */
+export const yearOfStudySchema = z.object({
+  yearOfStudy: z.enum(YearOfStudy, { error: "Select a valid year of study" }),
+});
+
+/** YearOfStudyBody is the validated body: { yearOfStudy }. */
+export type YearOfStudyBody = z.infer<typeof yearOfStudySchema>;
 
 /**
  * majorDataSchema validates the course extraction AI's reply.

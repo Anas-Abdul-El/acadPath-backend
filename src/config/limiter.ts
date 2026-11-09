@@ -1,4 +1,12 @@
+import type { Request } from "express";
 import rateLimit, { ipKeyGenerator } from "express-rate-limit";
+
+// GET routes the frontend polls every few seconds while uploads are processing.
+// They skip the global limit, which they would exhaust in minutes, and use pollLimiter.
+const POLLED_PATHS = new Set(["/api/me/documents", "/api/me/university/sources"]);
+
+const isPolledRequest = (req: Request) =>
+  req.method === "GET" && POLLED_PATHS.has(req.path.replace(/\/+$/, ""));
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -6,6 +14,19 @@ const limiter = rateLimit({
   standardHeaders: "draft-8",
   legacyHeaders: false,
   message: { error: { message: "Too many requests, try again later" } },
+  skip: isPolledRequest,
+});
+
+// Per-user limit for the polled routes: about one request every 1.5 seconds.
+// Must run after authenticate.
+export const pollLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  limit: 600,
+  keyGenerator: (req, res) => res.locals.user?.id ?? ipKeyGenerator(req.ip ?? ""),
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  message: { error: { message: "Too many requests, try again later" } },
+  skip: () => process.env.NODE_ENV === "test",
 });
 
 // Stricter limit for the auth routes to slow down password guessing.
