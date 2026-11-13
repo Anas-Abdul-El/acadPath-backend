@@ -6,6 +6,7 @@ export * from "./academic/index.js";
 export * from "./advisor/index.js";
 export * from "./courses/index.js";
 export * from "./documents/index.js";
+export * from "./portal/index.js";
 export * from "./recommendations/index.js";
 export * from "./study-plan/index.js";
 export * from "./university/index.js";

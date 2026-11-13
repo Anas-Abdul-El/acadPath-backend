@@ -119,3 +119,31 @@ export interface StudentDocumentDto {
 export interface StudentDocumentsOutput {
   data: StudentDocumentDto[];
 }
+
+/** The remote student-portal browser, as shown on the onboarding transcript step. */
+export interface PortalStatusDto {
+  running: boolean;
+  url: string | null;
+  title: string | null;
+  loggedIn: boolean;
+  onTranscript: boolean;
+  score: number;
+  threshold: number;
+  reasons: string[];
+  captured: { url: string; title: string; capturedAt: string; length: number } | null;
+}
+
+/** POST /me/portal: the session, plus a single-use ticket for its WebSocket. */
+export interface PortalSessionDto {
+  status: PortalStatusDto;
+  ticket: string;
+  socketPath: string;
+}
+
+export interface PortalStatusOutput {
+  data: PortalStatusDto;
+}
+
+export interface PortalSessionOutput {
+  data: PortalSessionDto;
+}

@@ -16,7 +16,7 @@ import {
   uploadSourcesSchema,
   yearOfStudySchema,
 } from "../schemas/me.schema.js";
-import { pollLimiter } from "../config/limiter.js";
+import { aiLimiter, pollLimiter, portalLimiter } from "../config/limiter.js";
 import catchAsync from "../utils/catchAsync";
 import meController from "../controllers";
 
@@ -66,6 +66,39 @@ meRouter.post(
   validateFiles(uploadDocumentFilesSchema),
   validateBody(uploadDocumentsBodySchema),
   catchAsync(meController.uploadDocuments),
+);
+
+// Remote student-portal browser: the student signs in to their university portal
+// and opens their transcript; the page is parsed and imported (see libs/portal/).
+meRouter.get(
+  "/portal",
+  authenticate,
+  authorize("STUDENT"),
+  pollLimiter,
+  catchAsync(meController.getPortal),
+);
+
+meRouter.post(
+  "/portal",
+  authenticate,
+  authorize("STUDENT"),
+  portalLimiter,
+  catchAsync(meController.startPortal),
+);
+
+meRouter.delete(
+  "/portal",
+  authenticate,
+  authorize("STUDENT"),
+  catchAsync(meController.stopPortal),
+);
+
+meRouter.post(
+  "/portal/transcript",
+  authenticate,
+  authorize("STUDENT"),
+  aiLimiter,
+  catchAsync(meController.importPortalTranscript),
 );
 
 meRouter.put(
