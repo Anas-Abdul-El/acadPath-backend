@@ -28,5 +28,5 @@
     "moduleResolution": "bundler",
     "resolveJsonModule": true
   },
-  "exclude": ["node_modules", "dist", "prisma.config.ts"]
+  "exclude": ["node_modules", "dist", "prisma.config.ts", "tests"]
 }

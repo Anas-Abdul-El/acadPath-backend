@@ -31,7 +31,6 @@ app.use(() => {
   throw new AppErr("Route not found", 404);
 });
 
-// Must be registered last
 app.use(errorHandler);
 
 export default app;
