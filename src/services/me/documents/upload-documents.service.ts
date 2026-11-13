@@ -23,7 +23,7 @@ import { toDocumentDto } from "./list-documents.service.js";
 
 type StoredFile = UploadedFile & { key: string };
 
-type MatchedRecord = Parameters<typeof meRepo.saveDocuments>[2][number];
+export type MatchedRecord = Parameters<typeof meRepo.saveDocuments>[2][number];
 
 const extractTranscriptFromFiles = async (
   input: MajorInput,
@@ -60,7 +60,7 @@ const extractTranscriptFromFiles = async (
   return result.data;
 };
 
-const matchRecordsToMajorCourses = async (
+export const matchRecordsToMajorCourses = async (
   major: { id: string; name: string },
   records: TranscriptData["records"],
 ): Promise<MatchedRecord[]> => {
@@ -94,9 +94,28 @@ const matchRecordsToMajorCourses = async (
 
 const extensions: Record<string, string> = {
   "application/pdf": "pdf",
+  "text/html": "html",
   "image/png": "png",
   "image/jpeg": "jpg",
   "image/webp": "webp",
+};
+
+/** Stores one document in object storage and returns its key. */
+export const storeDocument = async (
+  studentId: string,
+  buffer: Buffer,
+  mimeType: string,
+): Promise<string> => {
+  const key = `documents/${studentId}/${randomUUID()}.${extensions[mimeType] ?? "bin"}`;
+  await s3.send(
+    new PutObjectCommand({
+      Bucket: ASSETS_BUCKET,
+      Key: key,
+      Body: buffer,
+      ContentType: mimeType,
+    }),
+  );
+  return key;
 };
 
 const storeFiles = async (
@@ -104,25 +123,17 @@ const storeFiles = async (
   files: UploadSourcesInput,
 ): Promise<StoredFile[]> => {
   return Promise.all(
-    files.map(async (file) => {
-      const key = `documents/${studentId}/${randomUUID()}.${extensions[file.mimetype] ?? "bin"}`;
-      await s3.send(
-        new PutObjectCommand({
-          Bucket: ASSETS_BUCKET,
-          Key: key,
-          Body: file.buffer,
-          ContentType: file.mimetype,
-        }),
-      );
-      return { ...file, key };
-    }),
+    files.map(async (file) => ({
+      ...file,
+      key: await storeDocument(studentId, file.buffer, file.mimetype),
+    })),
   );
 };
 
-const saveDocuments = async (
+export const saveDocuments = async (
   studentId: string,
   type: StudentDocumentType,
-  files: StoredFile[],
+  files: Pick<StoredFile, "originalname" | "key" | "mimetype" | "size">[],
   records: MatchedRecord[],
 ): Promise<StudentDocumentDto[]> => {
   const saved = await meRepo.saveDocuments(
