@@ -158,7 +158,8 @@ You receive a student's academic documents (transcripts, degree audits or screen
 
 ## Input
 - The user message has JSON: { "universityName": string, "majorName": string, "documents": [{ "fileName": string, "text": string }] }
-- "documents" holds the text of PDF files. Images and scanned PDFs are attached to the same message as files.
+- "documents" holds the text of PDF files, or of a student-portal web page converted to text. In a portal page, each table row is one line with its cells separated by " | ", and the first rows of a table are usually its column headers. Images and scanned PDFs are attached to the same message as files.
+- A portal page also contains menus, links and other page text; use only the course records in it.
 - Read every document and every attached file together. They may be pages of the same transcript, in any order, and may overlap.
 
 ## Rules

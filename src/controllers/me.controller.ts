@@ -11,6 +11,8 @@ import type {
 } from "../schemas/me.schema.js";
 import type {
   MeOutput,
+  PortalSessionOutput,
+  PortalStatusOutput,
   SelectUniversityOutput,
   StudentDocumentsOutput,
   UniversityOutput,
@@ -131,4 +133,47 @@ export const getStudentUniversitySources = async (
   const data = await meService.getStudentUniversitySources(authUser.id);
 
   res.send({ data });
+};
+
+export const startPortal = async (
+  req: Request,
+  res: Response<PortalSessionOutput>,
+) => {
+  const authUser = res.locals.user;
+  if (!authUser) throw new AppErr("Missing or malformed access token", 401);
+
+  const data = await meService.startPortal(authUser.id);
+
+  res.send({ data });
+};
+
+export const getPortal = async (
+  req: Request,
+  res: Response<PortalStatusOutput>,
+) => {
+  const authUser = res.locals.user;
+  if (!authUser) throw new AppErr("Missing or malformed access token", 401);
+
+  res.send({ data: meService.getPortal(authUser.id) });
+};
+
+export const stopPortal = async (req: Request, res: Response) => {
+  const authUser = res.locals.user;
+  if (!authUser) throw new AppErr("Missing or malformed access token", 401);
+
+  await meService.stopPortal(authUser.id);
+
+  res.status(204).end();
+};
+
+export const importPortalTranscript = async (
+  req: Request,
+  res: Response<StudentDocumentsOutput>,
+) => {
+  const authUser = res.locals.user;
+  if (!authUser) throw new AppErr("Missing or malformed access token", 401);
+
+  const data = await meService.importPortalTranscript(authUser.id);
+
+  res.status(201).send({ data });
 };
