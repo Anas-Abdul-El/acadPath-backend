@@ -7,7 +7,7 @@ const DEV_ORIGIN = "http://localhost:5173";
 // CORS_ORIGIN is a comma-separated list of exact origins (scheme, host and port,
 // no path), e.g. "https://acadpath.app,https://www.acadpath.app".
 // Validated once at startup: production refuses to start without it.
-const allowedOrigins = z
+export const allowedOrigins = z
   .string()
   .optional()
   .transform((value, ctx) => {
