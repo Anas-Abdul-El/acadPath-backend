@@ -17,13 +17,19 @@ function isExposedClientError(error: unknown): error is Error & { status: number
   );
 }
 
+// JSON.stringify turns an Error into {}, so production logs (JSON) would lose the reason.
+function describeCause(cause: unknown): unknown {
+  if (!(cause instanceof Error)) return cause;
+  return { name: cause.name, message: cause.message, stack: cause.stack };
+}
+
 // Last middleware in the chain; Express 5 sends both thrown errors and rejected
 // promises from async handlers here. Every error response has the shape
 // { error: { message, details? } }.
 // Express recognizes error handlers by their four parameters, so `_next` must stay.
 export function errorHandler(error: unknown, _req: Request, res: Response, _next: NextFunction) {
   if (error instanceof AppErr) {
-    if (error.statusCode >= 500) logger.error(error.message, { cause: error.cause });
+    if (error.statusCode >= 500) logger.error(error.message, { cause: describeCause(error.cause) });
 
     res.status(error.statusCode).json({
       error: { message: error.message, ...(error.details && { details: error.details }) },
