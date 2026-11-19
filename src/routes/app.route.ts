@@ -5,7 +5,7 @@ import {
   validateBody,
   validateParams,
   validateQuery,
-} from "../middlewares";
+} from "../middlewares/index.js";
 import {
   academicRecordsQuerySchema,
   advisorChatSchema,
@@ -19,8 +19,8 @@ import {
   whatIfSchema,
 } from "../schemas/app.schema.js";
 import { aiLimiter } from "../config/limiter.js";
-import catchAsync from "../utils/catchAsync";
-import appController from "../controllers";
+import catchAsync from "../utils/catchAsync.js";
+import appController from "../controllers/index.js";
 
 const appRouter: Router = Router();
 export const courseRouter: Router = Router();
