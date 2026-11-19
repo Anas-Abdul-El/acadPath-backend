@@ -1,0 +1,51 @@
+# Render Blueprint: in the Render dashboard choose New → Blueprint and pick this repo.
+# Variables marked `sync: false` are asked for when the Blueprint is created.
+services:
+  - type: web
+    name: acadpath-backend
+    runtime: docker
+    # The portal import runs Chromium inside this service. The free plan's 512 MB is tight
+    # for that; move to Starter or larger if the portal import runs out of memory.
+    plan: free
+    region: oregon
+    branch: main
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: LOG_LEVEL
+        value: info
+      # Requests arrive through Vercel's /api rewrite and then Render's proxy. Vercel
+      # replaces X-Forwarded-For with the real client IP, so trust the left-most entry.
+      - key: TRUST_PROXY
+        value: "true"
+      # The Vercel URL of the frontend, e.g. https://acadpath-frontend.vercel.app
+      # (comma-separate several). Also checked on the portal WebSocket.
+      - key: CORS_ORIGIN
+        sync: false
+      - key: ACCESS_TOKEN_SECRET
+        generateValue: true
+      - key: REFRESH_TOKEN_SECRET
+        generateValue: true
+      - key: OPENROUTER_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      # Neon: pooled URL for the app, direct URL for migrations.
+      - key: DATABASE_URL
+        sync: false
+      - key: DATABASE_URL_UNPOOLED
+        sync: false
+      - key: NEON_BRANCH
+        sync: false
+      # Neon object storage (S3-compatible).
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: AWS_ENDPOINT_URL_S3
+        sync: false
+      - key: AWS_REGION
+        sync: false
