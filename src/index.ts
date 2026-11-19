@@ -11,6 +11,27 @@ import routers from "./routes/index.js";
 
 const app: Express = express();
 
+// Behind Render's proxy (and Vercel's, when the frontend proxies /api), the client IP
+// is in X-Forwarded-For. Without this every request looks like it comes from the proxy,
+// so all users would share one rate-limit bucket. TRUST_PROXY takes Express's values:
+// a hop count ("2"), "true", or a comma-separated list of addresses/subnets.
+const trustProxy = process.env.TRUST_PROXY?.trim();
+if (trustProxy) {
+  app.set(
+    "trust proxy",
+    /^\d+$/.test(trustProxy) ? Number(trustProxy)
+    : trustProxy === "true" ? true
+    : trustProxy === "false" ? false
+    : trustProxy,
+  );
+}
+
+// Liveness check for the host (Render's health check). Before the rate limiter, so
+// health checks never use up a bucket, and it never touches the database.
+app.get("/api/health", (_req, res) => {
+  res.json({ data: { status: "ok" } });
+});
+
 // CORS first, so every response (including 429s and errors) carries the CORS
 // headers, and preflight OPTIONS requests are answered before the rate limiter.
 app.use(cors(corsOptions));

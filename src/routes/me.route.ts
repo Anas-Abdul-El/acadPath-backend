@@ -6,7 +6,7 @@ import {
   validateBody,
   validateFiles,
   validateQuery,
-} from "../middlewares";
+} from "../middlewares/index.js";
 import {
   documentsQuerySchema,
   selectUniversitySchema,
@@ -17,8 +17,8 @@ import {
   yearOfStudySchema,
 } from "../schemas/me.schema.js";
 import { aiLimiter, pollLimiter, portalLimiter } from "../config/limiter.js";
-import catchAsync from "../utils/catchAsync";
-import meController from "../controllers";
+import catchAsync from "../utils/catchAsync.js";
+import meController from "../controllers/index.js";
 
 const meRouter: Router = Router();
 
