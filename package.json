@@ -10,7 +10,8 @@
     "test": "NODE_OPTIONS='--experimental-vm-modules --disable-warning=ExperimentalWarning' jest",
     "postinstall": "prisma skills sync || exit 0",
     "contract:emit": "prisma contract emit",
-    "make-admin": "neon-env run -- tsx scripts/make-admin.mts"
+    "make-admin": "neon-env run -- tsx scripts/make-admin.mts",
+    "browser:install": "playwright install --only-shell chromium"
   },
   "keywords": [],
   "author": "",
