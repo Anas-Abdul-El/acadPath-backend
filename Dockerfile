@@ -5,8 +5,9 @@ FROM mcr.microsoft.com/playwright:v1.65.0-noble
 
 WORKDIR /app
 
-# pnpm at the version package.json pins.
-RUN corepack enable
+# pnpm at the version package.json pins. Corepack isn't bundled with Node 25+, so
+# install pnpm directly; keep this version in sync with "packageManager" in package.json.
+RUN npm install -g pnpm@12.4.2
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 # Dev dependencies stay: the build needs TypeScript, and the start command runs the
